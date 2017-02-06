@@ -18,7 +18,7 @@ namespace NetworKit {
 
 TEST(AlgebraicMatchingCoarseningGTest, testContraction) {
 	METISGraphReader reader;
-	Graph G = reader.read("input/wing.graph");
+	Graph G = reader.read("input/hep-th.graph");
 
 	LocalMaxMatcher matcher(G);
 	matcher.run();
