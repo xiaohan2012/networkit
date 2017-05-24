@@ -20,7 +20,7 @@ using std::abs;
 
 namespace NetworKit {
 
-static constexpr double PI = std::acos(-1);
+static const double PI = std::acos(-1);
 
 class HyperbolicSpace {
 public:
