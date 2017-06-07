@@ -134,6 +134,8 @@ TEST_F(GeneratorsGTest, viewDynamicBarabasiAlbertGenerator) {
 }
 
 TEST_F(GeneratorsGTest, testStaticPubWebGenerator) {
+	Aux::Random::setSeed(42, false);
+
 	count n = 1800;
 	count numCluster = 24;
 	count maxNumNeighbors = 36;
@@ -158,7 +160,7 @@ TEST_F(GeneratorsGTest, testStaticPubWebGenerator) {
 	psWriter.write(G, oneClustering, "output/pubweb.eps");
 
 	// clustering
-	PLM clusterAlgo(G);
+	PLM clusterAlgo(G, false, 1.0, "none randomized");
 	clusterAlgo.run();
 	Partition clustering = clusterAlgo.getPartition();
 	EXPECT_EQ(G.numberOfNodes(),clustering.numberOfElements());
@@ -223,6 +225,8 @@ TEST_F(GeneratorsGTest, testDynamicPubWebGenerator) {
  * Testing the dynamic hyperbolic generator with fixed parameters and changing node positions
  */
 TEST_F(GeneratorsGTest, testDynamicHyperbolicGeneratorOnMovedNodes) {
+	Aux::Random::setSeed(0, false);
+
 	//set up dynamic parameters
 	int nSteps = 20;
 	const count n = 1000;
@@ -519,7 +523,7 @@ TEST_F(GeneratorsGTest, testChungLuGeneratorDegreeConsistency) {
     std::vector<count> vec;
     count maxDegree = n / 8;
     /* Creates a random sequence of weights */
-    for (int i = 0; i < n; i++){
+    for (index i = 0; i < n; i++){
         int grad = Aux::Random::integer(1, maxDegree);
         vec.push_back(grad);
     }
@@ -542,7 +546,7 @@ TEST_F(GeneratorsGTest, testChungLuGeneratorVolumeConsistency) {
     count maxDegree = n / 8;
     count expectedVolume = 0;
     /* Creates a random sequence of weights */
-    for (int i = 0; i < n; i++){
+    for (index i = 0; i < n; i++){
         int grad = Aux::Random::integer(1, maxDegree);
         vec.push_back(grad);
         expectedVolume += grad;
