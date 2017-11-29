@@ -1,6 +1,6 @@
 #include "heap.h"
 
-#include "defs.h"
+#include "../defs.h"
 
 namespace NetworKit{
   namespace gadget {

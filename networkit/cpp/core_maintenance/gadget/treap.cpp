@@ -2,7 +2,7 @@
 
 #include <random>
 
-#include "defs.h"
+#include "../defs.h"
 
 namespace NetworKit{
   namespace gadget {

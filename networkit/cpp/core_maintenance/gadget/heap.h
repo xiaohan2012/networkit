@@ -2,6 +2,7 @@
 #define CORE_GADGET_HEAP_H_
 
 #include <vector>
+#include "../../Globals.h"
 
 namespace NetworKit{
   namespace gadget {

@@ -3,6 +3,7 @@
 #define CORE_GADGET_TREAP_H_
 
 #include <vector>
+#include "../../Globals.h"
 
 namespace NetworKit{
   namespace gadget {

@@ -3,16 +3,18 @@
 
 #include <utility>
 #include <vector>
+#include "../../Globals.h"
+#include "../../graph/Graph.h"
 
 namespace NetworKit{
   namespace gadget {
     void RepeatWith(const char symbol, const int repeat);
-    std::vector<std::vector<int>> ReadGraph(const char* const path,
-					    int* const n, int* const m);
-    std::vector<std::pair<int, int>> ReadTempEdgesS(const char* const path,
-						    int* const n, int* const m);
-    std::vector<std::pair<int, int>> ReadEdgesS(const char* const path,
-						int* const n, int* const m);
+    Graph ReadGraph(const char* const path,
+		    count* const n, count* const m);
+    Graph ReadTempEdgesS(const char* const path,
+			 count* const n, count* const m);
+    Graph ReadEdgesS(const char* const path,
+		     count* const n, count* const m);
   }  // namespace gadget
 }
 #endif

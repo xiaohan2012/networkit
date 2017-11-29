@@ -8,6 +8,7 @@
 #define CORE_GADGET_DISJOINT_H_
 
 #include <vector>
+#include "../../Globals.h"
 
 namespace NetworKit{
   namespace gadget {

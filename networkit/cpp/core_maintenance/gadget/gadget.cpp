@@ -5,7 +5,11 @@
 #include <limits>
 #include <set>
 
-#include "defs.h"
+#include "../defs.h"
+#include "../../Globals.h"
+#include "../../graph/Graph.h"
+
+
 namespace NetworKit{
   namespace gadget {
     void RepeatWith(const char symbol, const int repeat) {
@@ -15,12 +19,12 @@ namespace NetworKit{
       }
       putchar('\n');
     }
-    std::vector<std::vector<int>> ReadGraph(const char* const path,
-					    int* const n, int* const m) {
+    Graph ReadGraph(const char* const path,
+		    count* const n, count* const m) {
       auto file = fopen(path, "r");
       fscanf(file, "%d %d", n, m);
       ASSERT(*n > 0 && *m > 0);
-      std::vector<std::vector<int>> graph(*n);
+      Graph graph(*n);
       // for debug purpose
       std::set<std::pair<int, int>> debug;
       // read the edges
@@ -34,8 +38,9 @@ namespace NetworKit{
 	ASSERT(debug.count(std::make_pair(v1, v2)) == 0);
 	debug.insert(std::make_pair(v1, v2));
 
-	graph[v1].push_back(v2);
-	graph[v2].push_back(v1);
+	graph.addEdge(v1, v2);
+	// graph[v1].push_back(v2);
+	// graph[v2].push_back(v1);
       }
       ASSERT(static_cast<decltype(debug.size())>(*m) == debug.size());
       fclose(file);

@@ -11,6 +11,9 @@
 #include "gadget/gadget.h"
 #include "glist.h"
 // #include "traversal/traversal.h"
+#include "../graph/Graph.h"
+#include "../Globals.h"
+using namespace NetworKit;
 
 int main(int argc, char** argv) {
   char path[100];      // path of input graph
@@ -36,7 +39,8 @@ int main(int argc, char** argv) {
     }
   }
   // read the graph
-  int n, m, m2;
+  count n, m, m2;
+  // int n, m, m2;
   const auto read_func = temp ? gadget::ReadTempEdgesS : gadget::ReadEdgesS;
   const auto edges = read_func(path, &n, &m);
   m2 = m - static_cast<int>(m * ratio);
@@ -59,15 +63,16 @@ int main(int argc, char** argv) {
     ASSERT(false);
   }
   // create the adjacent list representation
-  std::vector<std::vector<int>> graph(n);
+  Graph graph(n);
   for (int i = 0; i < m2; ++i) {
     int v1 = edges[i].first;
     int v2 = edges[i].second;
-    graph[v1].push_back(v2);
-    graph[v2].push_back(v1);
+    graph.addEdge(v1, v2);
+    // graph[v1].push_back(v2);
+    // graph[v2].push_back(v1);
   }
   // compute the base core
-  std::vector<int> core(n);
+  std::vector<index> core(n);
   const auto init_beg = std::chrono::steady_clock::now();
   cm->ComputeCore(graph, true, core);
   const auto init_end = std::chrono::steady_clock::now();
@@ -79,42 +84,42 @@ int main(int argc, char** argv) {
     cm->Check(graph, core);
     // ASSERT(false);
   }
-  // insert edges
-  const auto ins_beg = std::chrono::steady_clock::now();
-  for (int i = m2; i < m; ++i) {
-    cm->Insert(edges[i].first, edges[i].second, graph, core);
-  }
-  const auto ins_end = std::chrono::steady_clock::now();
-  const auto ins_dif = ins_end - ins_beg;
-  printf("core insert costs \x1b[1;31m%f\x1b[0m ms\n",
-         std::chrono::duration<double, std::milli>(ins_dif).count());
+  // // insert edges
+  // const auto ins_beg = std::chrono::steady_clock::now();
+  // for (int i = m2; i < m; ++i) {
+  //   cm->Insert(edges[i].first, edges[i].second, graph, core);
+  // }
+  // const auto ins_end = std::chrono::steady_clock::now();
+  // const auto ins_dif = ins_end - ins_beg;
+  // printf("core insert costs \x1b[1;31m%f\x1b[0m ms\n",
+  //        std::chrono::duration<double, std::milli>(ins_dif).count());
 
-  // verify the result
-  {
-    // ERROR("check: insert", false);
-    std::vector<int> tmp_core(n);
-    cm->ComputeCore(graph, false, tmp_core);
-    ASSERT_INFO(tmp_core == core, "wrong result after insert");
-    cm->Check(graph, core);
-    // ERROR("check passed", false);
-  }
-  // remove edges
-  const auto rmv_beg = std::chrono::steady_clock::now();
-  for (int i = m - 1; i >= m2; --i) {
-    cm->Remove(edges[i].first, edges[i].second, graph, core);
-  }
-  const auto rmv_end = std::chrono::steady_clock::now();
-  const auto rmv_dif = rmv_end - rmv_beg;
-  printf("core remove costs \x1b[1;31m%f\x1b[0m ms\n",
-         std::chrono::duration<double, std::milli>(rmv_dif).count());
-  // verify the result
-  {
-    // ERROR("check: remove", false);
-    std::vector<int> tmp_core(n);
-    cm->ComputeCore(graph, false, tmp_core);
-    ASSERT_INFO(tmp_core == core, "wrong result after remove");
-    cm->Check(graph, core);
-    // ERROR("check passed", false);
-  }
+  // // verify the result
+  // {
+  //   // ERROR("check: insert", false);
+  //   std::vector<int> tmp_core(n);
+  //   cm->ComputeCore(graph, false, tmp_core);
+  //   ASSERT_INFO(tmp_core == core, "wrong result after insert");
+  //   cm->Check(graph, core);
+  //   // ERROR("check passed", false);
+  // }
+  // // remove edges
+  // const auto rmv_beg = std::chrono::steady_clock::now();
+  // for (int i = m - 1; i >= m2; --i) {
+  //   cm->Remove(edges[i].first, edges[i].second, graph, core);
+  // }
+  // const auto rmv_end = std::chrono::steady_clock::now();
+  // const auto rmv_dif = rmv_end - rmv_beg;
+  // printf("core remove costs \x1b[1;31m%f\x1b[0m ms\n",
+  //        std::chrono::duration<double, std::milli>(rmv_dif).count());
+  // // verify the result
+  // {
+  //   // ERROR("check: remove", false);
+  //   std::vector<int> tmp_core(n);
+  //   cm->ComputeCore(graph, false, tmp_core);
+  //   ASSERT_INFO(tmp_core == core, "wrong result after remove");
+  //   cm->Check(graph, core);
+  //   // ERROR("check passed", false);
+  // }
   delete cm;
 }

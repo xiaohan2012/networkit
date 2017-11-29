@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "defs.h"
+#include "../defs.h"
 
 namespace NetworKit{
   namespace gadget {

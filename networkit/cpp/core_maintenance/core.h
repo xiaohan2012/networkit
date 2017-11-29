@@ -14,14 +14,14 @@ namespace NetworKit {
       virtual void ComputeCore(const Graph& graph,
 			       const bool init_idx, // initialize the index?
 			       std::vector<node>& core) = 0;
-      virtual void Insert(const int v1, const int v2,
-			  std::vector<std::vector<int>>& graph,
-			  std::vector<int>& core) = 0;
-      virtual void Remove(const int v1, const int v2,
-			  std::vector<std::vector<int>>& graph,
-			  std::vector<int>& core) = 0;
-      virtual void Check(const std::vector<std::vector<int>>& graph,
-			 const std::vector<int>& core) const = 0;
+      virtual void Insert(const node v1, const node v2,
+			  Graph& graph,
+			  std::vector<count>& core) = 0;
+      virtual void Remove(const node v1, const node v2,
+			  Graph& graph,
+			  std::vector<count>& core) = 0;
+      virtual void Check(const Graph& graph,
+			 const std::vector<count>& core) const = 0;
     };
   }  // namespace core
 }
