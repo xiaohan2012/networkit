@@ -28,13 +28,29 @@ namespace NetworKit{
       void Check(const Graph& graph,
 		 const std::vector<index>& core) const;
 
-    private:
+      /*
+	for testing purpose only
+	don't use unless it's not test
+      */
       struct ListNode {
 	count rem;
 	count ext;
 	index prev;
 	index next;
       };
+      
+      std::vector<ListNode> get_nodes(){
+	return this->node_;
+      }
+
+            
+    private:
+      /* struct ListNode { */
+      /* 	count rem; */
+      /* 	count ext; */
+      /* 	index prev; */
+      /* 	index next; */
+      /* }; */
 
       void Keep(const Graph& graph,
 		const index v, const index K,
