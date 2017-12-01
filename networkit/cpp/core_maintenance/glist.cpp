@@ -27,7 +27,7 @@ namespace NetworKit {
       evicted_ = std::vector<bool>(n_, false);
     }
     GLIST::~GLIST() {}
-
+    
     void GLIST::ComputeCore(const Graph& graph,
 			    const bool init_idx,
 			    std::vector<node>& core) {
@@ -474,6 +474,45 @@ namespace NetworKit {
 	  --deg_[u];
 	  if (deg_[u] < K && !evicted_[u]) {
 	    PropagateDismissal(graph, K, u, core, to_be_clear, changed);
+	  }
+	}
+      }
+    }
+
+    void GLIST::CoreGuidedBFS(const Graph& graph,
+			      const std::vector<index>& core,
+			      std::vector<CoreComponent>& nc_list,
+			      std::vector<index>& nc_ids){
+      // std::cerr << "[          ] run " << std::endl;
+      int n = graph.numberOfNodes();
+      std::vector<bool> visited(n, false);
+      std::queue<node> q;
+
+      int nc_id = -1;
+      for(index i: graph.nodes()){
+	if(visited[i]) continue;
+
+	nc_id++; //  a new component
+
+	q.push(i);
+	while(!q.empty()){	 
+	  node u = q.front();
+	  q.pop();
+
+	  // std::cerr << "visiting: " << u << std::endl;
+	  
+	  visited[u] = true;
+	  
+	  nc_list[nc_id].nodes.push_back(u);
+	  nc_ids[u] = nc_id;
+	  
+	  for(node v: graph.neighbors(u)){
+	    if(!visited[v] && core[u] == core[v]){
+	      // std::cerr << "visiting nbr: " << v << std::endl;
+	      visited[v] = true;
+	      q.push(v);
+	      // nc_list[nc_id].nodes.push_back(v);
+	    }
 	  }
 	}
       }

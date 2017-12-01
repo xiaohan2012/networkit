@@ -78,7 +78,7 @@ void ComputeCoreGTest::SetUp() {
 
 /** CONSTRUCTORS **/
 
-TEST_P(ComputeCoreGTest, testCopyConstructor) {
+TEST_P(ComputeCoreGTest, testCoreNumberAndRemainingDegree) {
 	Graph G = Graph(this->G, false, false);
 
 	ASSERT_FALSE(G.isWeighted());
@@ -107,6 +107,28 @@ TEST_P(ComputeCoreGTest, testCopyConstructor) {
 	
 }
 
+  TEST_P(ComputeCoreGTest, testCoreGuidedBFS) {
+    Graph G = Graph(this->G, false, false);
+    int N = G.numberOfNodes();
+
+    // get core
+    core::GLIST glist(N);
+    std::vector<index> core(N);
+    glist.ComputeCore(G, true, core);
+
+    // bfs guided by core
+    std::vector<core::GLIST::CoreComponent> nc_list(N);
+    std::vector<index> nc_ids(N);
+    glist.CoreGuidedBFS(G, core, nc_list, nc_ids);
+
+    // check
+    ASSERT_THAT(nc_list[0].nodes, testing::ElementsAre(0));
+
+    ASSERT_THAT(nc_list[1].nodes, testing::ElementsAre(1, 2, 3, 4));    
+
+
+    ASSERT_THAT(nc_ids, testing::ElementsAre(0, 1, 1, 1, 1));
+  }
 
 } /* namespace NetworKit */
 

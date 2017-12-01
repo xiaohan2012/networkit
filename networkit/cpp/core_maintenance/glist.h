@@ -4,6 +4,9 @@
 #ifndef CORE_GLIST_GLIST_H_
 #define CORE_GLIST_GLIST_H_
 
+#include <queue>
+#include <iostream>
+
 #include "core.h"
 
 #include "gadget/heap.h"
@@ -27,6 +30,16 @@ namespace NetworKit{
 		  std::vector<index>& core);
       void Check(const Graph& graph,
 		 const std::vector<index>& core) const;
+
+      struct CoreComponent {
+	std::vector<index> nodes;
+	std::unordered_set<index> usable;
+      };
+      
+      void CoreGuidedBFS(const Graph& graph,
+			 const std::vector<index>& core,
+			 std::vector<CoreComponent>& nc_list,
+			 std::vector<index>& nc_ids);
 
       /*
 	for testing purpose only
