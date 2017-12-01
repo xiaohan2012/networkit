@@ -302,15 +302,21 @@ namespace NetworKit {
 	deg_[u] = 0;
       }
       if (!changed.empty()) {
+	std::cerr << "first while start" << std::endl;
 	while (n_ != head_[K] && evicted_[head_[K]]) {
 	  head_[K] = node_[head_[K]].next;
 	}
+	std::cerr << "first while done" << std::endl;
+	std::cerr << "second while start" << std::endl;
 	while (n_ != tail_[K] && evicted_[tail_[K]]) {
 	  tail_[K] = node_[tail_[K]].prev;
 	}
+	std::cerr << "second while done" << std::endl;
 	if (n_ == head_[K]) {
 	  head_[K] = tail_[K] = -1;
 	}
+
+	std::cerr << "first for loop" << std::endl;
 	for (const index v : changed) {
 	  node_[v].rem = 0;
 	  for (const index u : graph.neighbors(v)) {
@@ -328,10 +334,13 @@ namespace NetworKit {
 	  }
 	  visited_[v] = true;
 	}
+	std::cerr << "second for loop" << std::endl;
 	for (const auto v : changed) {
 	  evicted_[v] = false;
 	  visited_[v] = false;
+	  std::cerr << "tree_.Delete" << std::endl;
 	  tree_.Delete(v, root_[K]);
+	  std::cerr << "tree_.Insert" << std::endl;
 	  tree_.Insert(v, false, root_[K - 1]);
 	  // remove from current list
 	  node_[node_[v].next].prev = node_[v].prev;
@@ -516,6 +525,154 @@ namespace NetworKit {
 	  }
 	}
       }
+    }
+    
+    int GLIST::FakeInsert(const node v1, const node v2,
+			  Graph& graph,
+			  std::vector<count>& core,
+			  const std::vector<node>& nc_ids,
+			  std::vector<node>& affected_nodes) {
+      /*
+	updates the set of affected nodes 
+	and return the new nc id
+       */
+      
+      // insert the edge
+      graph.addEdge(v1, v2);
+      // update mcd
+      if (core[v1] <= core[v2]) ++mcd_[v1];
+      if (core[v2] <= core[v1]) ++mcd_[v2];
+      // the source node and the current core number
+      index src = v1, target = v2;
+      const count K = core[v1] <= core[v2] ? core[v1] : core[v2];
+      if ((core[v1] == core[v2] &&
+	   tree_.Rank(v1) > tree_.Rank(v2)) ||
+	  core[v1] > core[v2]) {
+	src = v2;
+	target = v1;
+      }
+      // update core number
+      ++node_[src].rem;
+      // there is no need to update the core numbers
+      if (node_[src].rem <= K) {
+	return -1;
+      }
+      // preparing the heap
+      heap_.Insert(GetRank(src), src);
+      //
+      std::vector<index> swap;
+      // the set of vertices, denoted as A, that doesn't need to be updated
+      index list_h = -1, list_t = -1;
+      for (index cur = head_[K]; n_ != cur; ) {
+	if (heap_.Empty() || (node_[cur].ext == 0 && node_[cur].rem <= K)) {
+	  const index start = cur;
+	  const index end = heap_.Empty() ? tail_[K] : node_[heap_.Top().val].prev;
+	  // advance the cur pointer
+	  cur = node_[end].next;
+	  // remove this sub-list and reinsert it into A
+	  node_[node_[start].prev].next = node_[end].next;
+	  node_[node_[end].next].prev = node_[start].prev;
+	  node_[start].prev = n_;
+	  node_[end].next = n_;
+	  if (-1 == list_h) {
+	    list_h = start;
+	    list_t = end;
+	  } else {
+	    node_[start].prev = list_t;
+	    node_[list_t].next = start;
+	    list_t = end;
+	  }
+	  continue;
+	}
+	// update the heap
+	// invariant: heap.Top().val == cur
+	ASSERT(heap_.Top().val == cur);
+	heap_.Delete(heap_.Top().key);
+	// deal with cur
+	const index next = node_[cur].next;
+	const index cur_deg = node_[cur].ext + node_[cur].rem;
+	if (likely(cur_deg <= K)) {
+	  // insert into A
+	  node_[node_[cur].prev].next = node_[cur].next;
+	  node_[node_[cur].next].prev = node_[cur].prev;
+	  if (likely(-1 != list_h)) {
+	    node_[cur].next = n_;
+	    node_[cur].prev = list_t;
+	    node_[list_t].next = cur;
+	    list_t = cur;
+	  } else {
+	    node_[cur].prev = node_[cur].next = n_;
+	    list_h = list_t = cur;
+	  }
+	  node_[cur].rem = cur_deg;
+	  node_[cur].ext = 0;
+	  Keep(graph, cur, K, core, list_t, swap);
+	} else {
+	  // cur is temporarily marked as evicted, i.e.,
+	  // its core number may be updated finally
+	  evicted_[cur] = true;
+	  for (const auto u : graph.neighbors(cur)) {
+	    if (core[u] == core[cur] && GetRank(u) > rank_[cur]) {
+	      ++node_[u].ext;
+	      if (!heap_.Contains(rank_[u])) {
+		heap_.Insert(rank_[u], u);
+	      }
+	    }
+	  }
+	}
+	cur = next;
+      }
+      ASSERT(heap_.Empty());
+      head_[K] = list_h;
+      tail_[K] = list_t;
+      for (const index v : swap) {
+	tree_.Delete(v, root_[K]);
+	tree_.InsertAfter(v, node_[v].prev, root_[K]);
+      }
+      // cope with those vertices whose core need to be updated
+      if (evicted_[src]) {
+	auto tail = -1; // tail
+	for (auto v = src; n_ != v; v = node_[v].next) {
+	  ++core[v];
+	  
+	  /* the difference */
+	  affected_nodes.push_back(v);
+	  
+	  node_[v].ext = 0;
+	  tail = v;
+	  // update mcd
+	  for (const auto u : graph.neighbors(v)) {
+	    if (evicted_[u]) continue;
+	    if (K + 1 == core[u]) {
+	      ++mcd_[u];
+	    } else if (K == core[u]) {
+	      --mcd_[v];
+	    }
+	  }
+	  // remove from the current tree
+	  tree_.Delete(v, root_[K]);
+	}
+	for (auto v = tail; n_ != v; v = node_[v].prev) {
+	  evicted_[v] = false;
+	  tree_.Insert(v, true, root_[K + 1]);
+	}
+	// merge list
+	if (-1 == head_[K + 1]) {
+	  head_[K + 1] = src;
+	  tail_[K + 1] = tail;
+	} else {
+	  node_[head_[K + 1]].prev = tail;
+	  node_[tail].next = head_[K + 1];
+	  head_[K + 1] = src;
+	}
+      }
+      for (const index v : garbage_) rank_[v] = 0;
+      garbage_.clear();
+
+      std::cerr << "Remove(v1, v2)" << std::endl;
+      /* roll back */
+      Remove(v1, v2, graph, core);
+      return nc_ids[target];
     }
   }  // namespace core
 }

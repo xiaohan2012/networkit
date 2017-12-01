@@ -41,6 +41,11 @@ namespace NetworKit{
 			 std::vector<CoreComponent>& nc_list,
 			 std::vector<index>& nc_ids);
 
+      int FakeInsert(const node v1, const node v2,
+		     Graph& graph,
+		     std::vector<count>& core,
+		     const std::vector<node>& nc_ids,
+		     std::vector<node>& affected_nodes);
       /*
 	for testing purpose only
 	don't use unless it's not test

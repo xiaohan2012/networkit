@@ -107,7 +107,7 @@ TEST_P(ComputeCoreGTest, testCoreNumberAndRemainingDegree) {
 	
 }
 
-  TEST_P(ComputeCoreGTest, testCoreGuidedBFS) {
+  TEST_P(ComputeCoreGTest, testAll) {
     Graph G = Graph(this->G, false, false);
     int N = G.numberOfNodes();
 
@@ -116,20 +116,33 @@ TEST_P(ComputeCoreGTest, testCoreNumberAndRemainingDegree) {
     std::vector<index> core(N);
     glist.ComputeCore(G, true, core);
 
-    // bfs guided by core
+    // CoreGuidedBFS
     std::vector<core::GLIST::CoreComponent> nc_list(N);
     std::vector<index> nc_ids(N);
     glist.CoreGuidedBFS(G, core, nc_list, nc_ids);
 
-    // check
     ASSERT_THAT(nc_list[0].nodes, testing::ElementsAre(0));
 
-    ASSERT_THAT(nc_list[1].nodes, testing::ElementsAre(1, 2, 3, 4));    
+    ASSERT_THAT(nc_list[1].nodes, testing::ElementsAre(1, 2, 3, 4)); 
 
 
     ASSERT_THAT(nc_ids, testing::ElementsAre(0, 1, 1, 1, 1));
+
+    // glist.Remove(0, 1, G, core);
+    // std::cerr << "remove done" << std::endl;
+    
+    // FakeInsert
+    std::vector<node> affected_nodes;
+    std::cerr << "fake inserting" << std::endl;
+    index new_nc_id = glist.FakeInsert(0, 4, G, core, nc_ids, affected_nodes);
+    std::cerr << "done" << std::endl;
+    ASSERT_EQ(new_nc_id, 1);
+    ASSERT_THAT(affected_nodes, testing::ElementsAre(0));
+    ASSERT_THAT(core, testing::ElementsAre(2, 3, 3, 3, 3));
   }
 
+
+  
 } /* namespace NetworKit */
 
 #endif /*NOGTEST */
