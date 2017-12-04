@@ -302,23 +302,21 @@ namespace NetworKit {
 	deg_[u] = 0;
       }
       if (!changed.empty()) {
-	std::cerr << "first while start" << std::endl;
+
 	while (n_ != head_[K] && evicted_[head_[K]]) {
 	  head_[K] = node_[head_[K]].next;
 	}
-	std::cerr << "first while done" << std::endl;
-	std::cerr << "second while start" << std::endl;
+
 	while (n_ != tail_[K] && evicted_[tail_[K]]) {
 	  tail_[K] = node_[tail_[K]].prev;
 	}
-	std::cerr << "second while done" << std::endl;
 	if (n_ == head_[K]) {
 	  head_[K] = tail_[K] = -1;
 	}
 
-	std::cerr << "first for loop" << std::endl;
 	for (const index v : changed) {
 	  node_[v].rem = 0;
+	  // update the neighbors
 	  for (const index u : graph.neighbors(v)) {
 	    if (core[u] == K) {
 	      --mcd_[u];
@@ -334,6 +332,8 @@ namespace NetworKit {
 	  }
 	  visited_[v] = true;
 	}
+
+	// update the treap
 	std::cerr << "second for loop" << std::endl;
 	for (const auto v : changed) {
 	  evicted_[v] = false;
@@ -526,7 +526,113 @@ namespace NetworKit {
 	}
       }
     }
-    
+
+    void GLIST::FakeRemove(const index v1, const index v2,
+			   Graph& graph,
+			   std::vector<index>& core) {
+      // touching the treap
+      graph.removeEdge(v1, v2);
+      // update the mcd values
+      if (core[v1] <= core[v2]) --mcd_[v1];
+      if (core[v2] <= core[v1]) --mcd_[v2];
+      // set the root and core number
+      const index root = core[v1] <= core[v2] ? v1 : v2;
+      const index K = core[root];
+      // update rem
+      if (core[v1] == core[v2]) {
+	if (tree_.Rank(v1) > tree_.Rank(v2)) {
+	  --node_[v2].rem;
+	} else {
+	  --node_[v1].rem;
+	}
+      } else {
+	--node_[root].rem;
+      }
+      // update cores
+      std::vector<index> to_be_clear;
+      std::vector<index> changed;
+      if (core[v1] != core[v2]) {
+	visited_[root] = true;
+	deg_[root] = mcd_[root];
+	to_be_clear.push_back(root);
+	if (deg_[root] < K) {
+	  PropagateDismissal(graph, K, root, core, to_be_clear, changed);
+	}
+      } else {
+	visited_[v1] = true;
+	deg_[v1] = mcd_[v1];
+	to_be_clear.push_back(v1);
+	if (deg_[v1] < K) {
+	  PropagateDismissal(graph, K, v1, core, to_be_clear, changed);
+	}
+	if (!visited_[v2]) {
+	  visited_[v2] = true;
+	  deg_[v2] = mcd_[v2];
+	  to_be_clear.push_back(v2);
+	  if (deg_[v2] < K) {
+	    PropagateDismissal(graph, K, v2, core, to_be_clear, changed);
+	  }
+	}
+      }
+      // clear
+      for (const index u : to_be_clear) {
+	visited_[u] = false;
+	deg_[u] = 0;
+      }
+      if (!changed.empty()) {
+	while (n_ != head_[K] && evicted_[head_[K]]) {
+	  head_[K] = node_[head_[K]].next;
+	}
+	while (n_ != tail_[K] && evicted_[tail_[K]]) {
+	  tail_[K] = node_[tail_[K]].prev;
+	}
+	if (n_ == head_[K]) {
+	  head_[K] = tail_[K] = -1;
+	}
+
+	for (const index v : changed) {
+	  node_[v].rem = 0;
+	  // update the neighbors
+	  for (const index u : graph.neighbors(v)) {
+	    if (core[u] == K) {
+	      --mcd_[u];
+	      if (!evicted_[u] && GetRank(v) > GetRank(u)) {
+		--node_[u].rem;
+	      }
+	    } else if (core[u] == K - 1 && !evicted_[u]) {
+	      ++mcd_[v];
+	    }
+	    if (core[u] >= K || (evicted_[u] && !visited_[u])) {
+	      ++node_[v].rem;
+	    }
+	  }
+	  visited_[v] = true;
+	}
+
+	// DO NOT UPDATE THE TREAP
+	// because Treap.Delete is buggy
+	// for (const auto v : changed) {
+	//   evicted_[v] = false;
+	//   visited_[v] = false;
+	//   tree_.Delete(v, root_[K]);
+	//   tree_.Insert(v, false, root_[K - 1]);
+	//   // remove from current list
+	//   node_[node_[v].next].prev = node_[v].prev;
+	//   node_[node_[v].prev].next = node_[v].next;
+	//   node_[v].next = node_[v].prev = n_;
+	//   // merge list
+	//   if (-1 == head_[K - 1]) {
+	//     head_[K - 1] = tail_[K - 1] = v;
+	//   } else {
+	//     node_[tail_[K - 1]].next = v;
+	//     node_[v].prev = tail_[K - 1];
+	//     tail_[K - 1] = v;
+	//   }
+	// }
+      }
+      for (const index g : garbage_) rank_[g] = 0;
+      garbage_.clear();
+    }    
     int GLIST::FakeInsert(const node v1, const node v2,
 			  Graph& graph,
 			  std::vector<count>& core,
@@ -669,9 +775,9 @@ namespace NetworKit {
       for (const index v : garbage_) rank_[v] = 0;
       garbage_.clear();
 
-      std::cerr << "Remove(v1, v2)" << std::endl;
+      // std::cerr << "Remove(" << v1 << "," << v2 << ")" << std::endl; // 0, 4
       /* roll back */
-      Remove(v1, v2, graph, core);
+      FakeRemove(v1, v2, graph, core);
       return nc_ids[target];
     }
   }  // namespace core

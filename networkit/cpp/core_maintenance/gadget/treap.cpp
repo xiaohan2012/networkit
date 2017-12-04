@@ -69,11 +69,14 @@ namespace NetworKit{
     }
     void Treap::Delete(const index x, index& r) {
       index y = nd_[x].p;
-      while (n_ != y) {
-	--nd_[y].s;
+      while (n_ != y) { // move y up the tree until y's parent is n_
+	--nd_[y].s; 
 	y = nd_[y].p;
       }
-      while (nd_[x].l != n_ || nd_[x].r != n_) {
+      // while (nd_[x].l != n_ && nd_[x].r != n_) {
+      while (nd_[x].l != n_ || nd_[x].r != n_) {	
+	// loop until x has some child that is n_
+	std::cerr << "nd_[x].l=" << nd_[x].l << ", nd_[x].r=" << nd_[x].r << ", n_=" <<  n_ << std::endl;
 	index* p = &r;
 	if (n_ != nd_[x].p) {
 	  if (x == nd_[nd_[x].p].l) {

@@ -46,6 +46,10 @@ namespace NetworKit{
 		     std::vector<count>& core,
 		     const std::vector<node>& nc_ids,
 		     std::vector<node>& affected_nodes);
+
+      void FakeRemove(const index v1, const index v2,
+			     Graph& graph,
+			     std::vector<index>& core);
       /*
 	for testing purpose only
 	don't use unless it's not test
