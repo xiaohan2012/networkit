@@ -41,6 +41,43 @@ namespace NetworKit {
     ASSERT_TRUE(greedy.added_edges_.empty());
     ASSERT_TRUE(greedy.evaluated_edges_.empty());
     ASSERT_TRUE(greedy.n2e_dep_.empty());
+    ASSERT_EQ(greedy.dummy_node, 6);
+    ASSERT_EQ(greedy.core_max_, 2);
+  }
+
+  TEST_F(GreedyTest, testGetCandidateEdge){
+    // nc 0 contains 0...4
+    // nc 1 contains 5
+    CoreMaximization::Greedy greedy(G, G.numberOfNodes());
+    Edge e = greedy.getCandidateEdge();
+    
+    ASSERT_EQ(e, Edge(5, greedy.dummy_node));
+    greedy.evaluated_edges_.insert(e);
+
+    std::unordered_set<Edge> inter_edges;    
+    
+    for(int i=0; i<3; i++){
+      Edge e = greedy.getCandidateEdge();
+      greedy.evaluated_edges_.insert(e);
+      inter_edges.insert(e);
+    }
+    std::unordered_set<Edge> expected = {Edge(0, 3), Edge(0, 4), Edge(1, 4)};
+    // for(auto e: inter_edges){
+    //   std::cerr << e.u << "," << e.v << std::endl;
+    // }
+    ASSERT_THAT(inter_edges,
+    		testing::ContainerEq(expected));
+
+    // inter-core edges
+    // for(int i=0; i<3; i++){
+    //   Edge e = greedy.getCandidateEdge();
+    //   greedy.evaluated_edges_.insert(e);
+    //   edges.insert(e);
+    // }   
+    
+    ASSERT_EQ(greedy.getCandidateEdge(),
+    	      Edge(greedy.dummy_node, greedy.dummy_node));
+    
   }
 }
 

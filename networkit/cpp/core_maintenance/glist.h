@@ -67,6 +67,14 @@ namespace NetworKit{
 	return this->node_;
       }
 
+      index GetRank(const index v) {
+	if (0 == rank_[v]) {
+	  rank_[v] = tree_.Rank(v);
+	  garbage_.push_back(v);
+	}
+	return rank_[v];
+      }
+
             
     private:
       /* struct ListNode { */
@@ -85,13 +93,6 @@ namespace NetworKit{
 			      std::vector<index>& core,
 			      std::vector<index>& to_be_clear,
 			      std::vector<index>& changed);
-      index GetRank(const index v) {
-	if (0 == rank_[v]) {
-	  rank_[v] = tree_.Rank(v);
-	  garbage_.push_back(v);
-	}
-	return rank_[v];
-      }
 
       index n_;
       std::vector<node> head_;

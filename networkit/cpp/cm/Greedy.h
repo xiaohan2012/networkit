@@ -2,6 +2,7 @@
 #define CM_GREEDY_H_
 
 #include <vector>
+#include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
 #include "../graph/Graph.h"
@@ -11,11 +12,13 @@ namespace NetworKit{
   namespace CoreMaximization{
     class Greedy final {
     public:
-      explicit Greedy(const Graph& g, count n);
+      explicit Greedy(Graph g, count n);
       ~Greedy();      
 
+      Edge getCandidateEdge();
       count node_rem(node i);
-  
+
+      Graph g_;
       index n_;
       node dummy_node;
       std::vector<index> core_;
@@ -36,7 +39,8 @@ namespace NetworKit{
       std::unordered_map<node, Edge> n2e_dep_;
 
       // other
-      count current_score; //  \Delta^{*} f
+      count current_score_; //  \Delta^{*} f
+      count core_max_;
     };
   }
 }
