@@ -517,7 +517,7 @@ namespace NetworKit {
 	  
 	  for(node v: graph.neighbors(u)){
 	    if(!visited[v] && core[u] == core[v]){
-	      // std::cerr << "visiting nbr: " << v << std::endl;
+	      // std::cerr << "same core: " << v << std::endl;
 	      visited[v] = true;
 	      q.push(v);
 	      // nc_list[nc_id].nodes.push_back(v);
@@ -779,6 +779,19 @@ namespace NetworKit {
       /* roll back */
       FakeRemove(v1, v2, graph, core);
       return nc_ids[target];
+    }
+
+    void GLIST::PrintNCList(const std::vector<CoreComponent>& nc_list){
+      for(int i=0; i < nc_list.size(); i++){
+    	GLIST::CoreComponent nc = nc_list[i];
+    	if(nc.nodes.size() > 0){
+    	  std::cerr << "i=" << i << " with nodes: " << std::endl;
+	  for(auto i: nc.nodes){
+	    std::cerr << i << ", ";
+	  }
+    	}
+	std::cerr << std::endl;
+      }
     }
   }  // namespace core
 }

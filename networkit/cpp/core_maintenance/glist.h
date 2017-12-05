@@ -50,6 +50,8 @@ namespace NetworKit{
       void FakeRemove(const index v1, const index v2,
 			     Graph& graph,
 			     std::vector<index>& core);
+      
+      void PrintNCList(const std::vector<CoreComponent>& nc_list);
       /*
 	for testing purpose only
 	don't use unless it's not test
