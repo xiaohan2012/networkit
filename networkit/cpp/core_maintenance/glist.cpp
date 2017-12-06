@@ -334,13 +334,13 @@ namespace NetworKit {
 	}
 
 	// update the treap
-	std::cerr << "second for loop" << std::endl;
+	// std::cerr << "second for loop" << std::endl;
 	for (const auto v : changed) {
 	  evicted_[v] = false;
 	  visited_[v] = false;
-	  std::cerr << "tree_.Delete" << std::endl;
+	  // std::cerr << "tree_.Delete" << std::endl;
 	  tree_.Delete(v, root_[K]);
-	  std::cerr << "tree_.Insert" << std::endl;
+	  // std::cerr << "tree_.Insert" << std::endl;
 	  tree_.Insert(v, false, root_[K - 1]);
 	  // remove from current list
 	  node_[node_[v].next].prev = node_[v].prev;
@@ -529,7 +529,7 @@ namespace NetworKit {
 
     void GLIST::FakeRemove(const index v1, const index v2,
 			   Graph& graph,
-			   std::vector<index>& core) {
+			   std::vector<index>& core) {      
       // touching the treap
       graph.removeEdge(v1, v2);
       // update the mcd values
@@ -642,6 +642,11 @@ namespace NetworKit {
 	updates the set of affected nodes 
 	and return the new nc id
        */
+      // bound checking
+      ASSERT(v1 >= 0);
+      ASSERT(v2 >= 0);
+      ASSERT(v1 < graph.numberOfNodes());
+      ASSERT(v2 < graph.numberOfNodes());
       
       // insert the edge
       graph.addEdge(v1, v2);

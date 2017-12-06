@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
+#include <iterator>
+
+
 #include "../graph/Graph.h"
 #include "../core_maintenance/glist.h"
 
@@ -15,7 +18,9 @@ namespace NetworKit{
       explicit Greedy(Graph g, count n);
       ~Greedy();      
 
+      bool isValidEdge(const Edge& e);
       Edge getCandidateEdge();
+      Edge bestEdge();
       count node_rem(node i);
 
       Graph g_;
@@ -36,11 +41,12 @@ namespace NetworKit{
       std::unordered_map<Edge, count> edge_gain_;
       std::unordered_set<Edge> added_edges_;
       std::unordered_set<Edge> evaluated_edges_;
-      std::unordered_map<node, Edge> n2e_dep_;
+      std::unordered_map<node, std::unordered_set<Edge>> n2e_dep_;
 
       // other
-      count current_score_; //  \Delta^{*} f
-      count core_max_;
+      count current_score_; //  \Delta^{*} f, the gain
+      count core_max_; // maximum core value of all nodes
+      count gain_max_; // maximum gain is bounded by the size of the largest CoreComponent
     };
   }
 }

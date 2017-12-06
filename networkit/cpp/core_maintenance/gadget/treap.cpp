@@ -76,7 +76,7 @@ namespace NetworKit{
       // while (nd_[x].l != n_ && nd_[x].r != n_) {
       while (nd_[x].l != n_ || nd_[x].r != n_) {	
 	// loop until x has some child that is n_
-	std::cerr << "nd_[x].l=" << nd_[x].l << ", nd_[x].r=" << nd_[x].r << ", n_=" <<  n_ << std::endl;
+	// std::cerr << "nd_[x].l=" << nd_[x].l << ", nd_[x].r=" << nd_[x].r << ", n_=" <<  n_ << std::endl;
 	index* p = &r;
 	if (n_ != nd_[x].p) {
 	  if (x == nd_[nd_[x].p].l) {

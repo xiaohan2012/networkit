@@ -4,6 +4,7 @@
 #include <utility>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <stdexcept>
 
 #include "../../graph/Graph.h"
 #include "../Greedy.h"
@@ -43,6 +44,7 @@ namespace NetworKit {
     ASSERT_TRUE(greedy.n2e_dep_.empty());
     ASSERT_EQ(greedy.dummy_node, 6);
     ASSERT_EQ(greedy.core_max_, 2);
+    ASSERT_EQ(greedy.gain_max_, 5);
   }
 
   TEST_F(GreedyTest, testGetCandidateEdge){
@@ -50,7 +52,7 @@ namespace NetworKit {
     // nc 1 contains 5
     CoreMaximization::Greedy greedy(G, G.numberOfNodes());
     Edge e = greedy.getCandidateEdge();
-    
+
     ASSERT_EQ(e, Edge(5, greedy.dummy_node));
     greedy.evaluated_edges_.insert(e);
 
@@ -75,9 +77,15 @@ namespace NetworKit {
     //   edges.insert(e);
     // }   
     
-    ASSERT_EQ(greedy.getCandidateEdge(),
-    	      Edge(greedy.dummy_node, greedy.dummy_node));
+    ASSERT_THROW(greedy.getCandidateEdge(), std::runtime_error);
     
+  }
+
+  TEST_F(GreedyTest, testBestEdge){
+    CoreMaximization::Greedy greedy(G, G.numberOfNodes());
+    Edge e = greedy.bestEdge();
+    std::unordered_set<Edge> best_edges = {Edge(0, 4), Edge(1, 4)};
+    ASSERT_TRUE(best_edges.find(e) != best_edges.end());
   }
 }
 

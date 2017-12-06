@@ -12,6 +12,13 @@ namespace NetworKit{
       glist_.CoreGuidedBFS(g, core_, nc_list_, nc_ids_);
       // glist_.PrintNCList(nc_list_);
 
+      // gain_max_
+      for(auto nc: nc_list_){
+	if(nc.nodes.size() > gain_max_){
+	  gain_max_ = nc.nodes.size();
+	}
+      }
+	
       // std::cerr << "bucket_1_.size()=" << bucket_1_.size() << std::endl;      
       for(node i=0; i<n; i++){
 	// std::cerr << i << std::endl;
@@ -61,6 +68,7 @@ namespace NetworKit{
 	std::unordered_set<index> nc_ids = bucket_2_[i];
 	for(index j: nc_ids){
 	  // std::cerr << "nc_id=" << j << std::endl;
+	  // within the CoreComponent
 	  core::GLIST::CoreComponent &nc = nc_list_[j];
 	  for(node u: nc.usable){
 	    // std::cerr << "u=" << u << std::endl;
@@ -81,7 +89,65 @@ namespace NetworKit{
 	  }
 	}
       }
-      return Edge(dummy_node, dummy_node);
+      throw std::runtime_error("no more candidate edges");
+      // return Edge(dummy_node, dummy_node);
     }
+
+    bool Greedy::isValidEdge(const Edge& e){
+      return (e.u != dummy_node)  || (e.v != dummy_node);
+    }
+    
+    Edge Greedy::bestEdge(){
+      std::vector<node> affected_nodes;
+      Edge best_e(dummy_node, dummy_node);
+      while(current_score_ < gain_max_){
+	std::cerr << current_score_ << " <= " << gain_max_ << std::endl;
+	try{
+	  // may throw exception
+	  Edge e = getCandidateEdge();
+	
+	  // if inter-core edge
+	  // randomly sample a higher core node as neighbor
+	  // v is the dummy node
+	  if(e.v == dummy_node){
+	    do{
+	      e.v = g_.randomNode();
+	      // (u, v) \not\in E and core(v) > core(u)
+	    }
+	    while(g_.hasEdge(e.u, e.v) || core_[e.v] <= core_[e.u]);
+	  }
+    
+	  evaluated_edges_.insert(e);
+	  std::cerr << "trying (" << e.u << ", "<< e.v << ")" << std::endl;
+	  glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
+
+	  // update cache
+	  for(node u: affected_nodes){
+	    n2e_dep_[u].insert(e);
+	  }
+
+	  count score = affected_nodes.size();
+	  std::cerr << "affected nodes" << std::endl;
+	  std::copy(affected_nodes.begin(), affected_nodes.end(), std::ostream_iterator<node>(std::cerr, " "));
+	  affected_nodes.clear(); // don't forget the empty it
+	
+	  std::cerr << std::endl;
+	
+	  if(score > current_score_){
+	    current_score_ = score;
+	    best_e = e;
+	    std::cerr << "best edge: (" << e.u << ", "<< e.v << ")" << std::endl; 
+	    std::cerr << "current score: " << current_score_ << std::endl;
+	  }
+	}
+	catch(std::runtime_error){
+	  // no more edges
+	  break;
+	}
+      }
+      return best_e;
+    }
+    
+    
   } // namespace NetworKit
 }
