@@ -21,6 +21,10 @@ namespace NetworKit{
       bool isValidEdge(const Edge& e);
       Edge getCandidateEdge();
       Edge bestEdge();
+      void maintain();
+    
+      std::vector<Edge> doGreedy(count k);
+      
       count node_rem(node i);
 
       Graph g_;

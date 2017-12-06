@@ -147,7 +147,23 @@ namespace NetworKit{
       }
       return best_e;
     }
+
+    void Greedy::maintain(){
+      // to do
+    }
     
-    
+    std::vector<Edge> Greedy::doGreedy(count k){
+      // select k edges greedily
+      added_edges_.clear();
+      std::vector<Edge> edges;
+      for(index i=0; i<k; i++){
+	Edge e = bestEdge();
+	edges.push_back(e);
+	added_edges_.insert(e);
+	
+	maintain();
+      }
+      return edges;
+    }
   } // namespace NetworKit
 }

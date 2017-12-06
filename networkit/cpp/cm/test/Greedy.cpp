@@ -87,5 +87,12 @@ namespace NetworKit {
     std::unordered_set<Edge> best_edges = {Edge(0, 4), Edge(1, 4)};
     ASSERT_TRUE(best_edges.find(e) != best_edges.end());
   }
+
+  TEST_F(GreedyTest, testDoGreedy){
+    CoreMaximization::Greedy greedy(G, G.numberOfNodes());
+    std::vector<Edge> edges = greedy.doGreedy(2);
+    ASSERT_EQ(edges[0], Edge(1, 4));
+    // ASSERT_EQ(edges[1].u, 0);
+  }  
 }
 
