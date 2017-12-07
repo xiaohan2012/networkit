@@ -84,14 +84,29 @@ namespace NetworKit {
   TEST_F(GreedyTest, testBestEdge){
     CoreMaximization::Greedy greedy(G, G.numberOfNodes());
     Edge e = greedy.bestEdge();
-    std::unordered_set<Edge> best_edges = {Edge(0, 4), Edge(1, 4)};
+    std::unordered_set<Edge> best_edges = {Edge(0, 4), Edge(0, 3)};
     ASSERT_TRUE(best_edges.find(e) != best_edges.end());
+    ASSERT_EQ(greedy.edge_score_[Edge(0, 4)], 5);
+    ASSERT_EQ(greedy.edge_score_[Edge(1, 4)], 4);
+    ASSERT_EQ(greedy.edge_score_[Edge(5, 6)], 1);
   }
 
-  TEST_F(GreedyTest, testDoGreedy){
+  TEST_F(GreedyTest, testMaintain){
     CoreMaximization::Greedy greedy(G, G.numberOfNodes());
-    std::vector<Edge> edges = greedy.doGreedy(2);
-    ASSERT_EQ(edges[0], Edge(1, 4));
+    greedy.maintain(Edge(0, 3));
+    greedy.nc_list_[0].nodes;
+
+    // should return a new CoreComponent
+    ASSERT_THAT(greedy.nc_list_[0].nodes,
+    	        testing::ContainerEq(std::unordered_set<index>({})));
+    ASSERT_EQ(greedy.nc_list_[0].usable.size(),
+	      testing::ContainerEq(std::unordered_set<index>({}))); 
+    
+  }
+  TEST_F(GreedyTest, testDoGreedy){
+    // CoreMaximization::Greedy greedy(G, G.numberOfNodes());
+    // std::vector<Edge> edges = greedy.doGreedy(2);
+    // ASSERT_EQ(edges[0], Edge(1, 4));
     // ASSERT_EQ(edges[1].u, 0);
   }  
 }

@@ -21,7 +21,7 @@ namespace NetworKit{
       bool isValidEdge(const Edge& e);
       Edge getCandidateEdge();
       Edge bestEdge();
-      void maintain();
+      void maintain(const Edge& added_edge);
     
       std::vector<Edge> doGreedy(count k);
       
@@ -31,7 +31,6 @@ namespace NetworKit{
       index n_;
       node dummy_node;
       std::vector<index> core_;
-      std::vector<index> rem_;
       std::vector<core::GLIST::CoreComponent> nc_list_;
       std::vector<index> nc_ids_;
       
@@ -46,6 +45,9 @@ namespace NetworKit{
       std::unordered_set<Edge> added_edges_;
       std::unordered_set<Edge> evaluated_edges_;
       std::unordered_map<node, std::unordered_set<Edge>> n2e_dep_;
+
+      // for inter core edge, store (u, dummy_node)
+      std::unordered_map<Edge, count> edge_score_;
 
       // other
       count current_score_; //  \Delta^{*} f, the gain

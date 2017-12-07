@@ -3,7 +3,7 @@
 namespace NetworKit{
   namespace CoreMaximization {
     
-    Greedy::Greedy(Graph g, count n): g_(g), n_(n), dummy_node(n), core_(n), rem_(n), nc_list_(n), nc_ids_(n),  glist_(n), bucket_1_(n+1, std::unordered_set<index>()), bucket_2_(n+1, std::unordered_set<index>()), current_score_(0){
+    Greedy::Greedy(Graph g, count n): g_(g), n_(n), dummy_node(n), core_(n), nc_list_(n), nc_ids_(n),  glist_(n), bucket_1_(n+1, std::unordered_set<index>()), bucket_2_(n+1, std::unordered_set<index>()), current_score_(0){
       glist_.ComputeCore(g, true, core_);
 
       core_max_ = *std::max_element(core_.begin(), core_.end());
@@ -50,7 +50,7 @@ namespace NetworKit{
     Greedy::~Greedy() {}
 
     Edge Greedy::getCandidateEdge(){
-      for(index i=current_score_ + 1; i < bucket_1_.size(); i++){
+      for(index i=current_score_ + 1; i < bucket_1_.size(); i++) {
 	// std::cerr << "i=" << i << std::endl;
 	std::unordered_set<index>& B = bucket_1_[i];
 	for(node u: B){
@@ -64,7 +64,7 @@ namespace NetworKit{
 	  }
 	}
       }
-      for(index i=current_score_+1; i < bucket_2_.size(); i++){
+      for(index i=current_score_+1; i < bucket_2_.size(); i++) {
 	std::unordered_set<index> nc_ids = bucket_2_[i];
 	for(index j: nc_ids){
 	  // std::cerr << "nc_id=" << j << std::endl;
@@ -102,6 +102,8 @@ namespace NetworKit{
       Edge best_e(dummy_node, dummy_node);
       while(current_score_ < gain_max_){
 	std::cerr << current_score_ << " <= " << gain_max_ << std::endl;
+
+	bool is_inter_core_edge = false;
 	try{
 	  // may throw exception
 	  Edge e = getCandidateEdge();
@@ -110,6 +112,7 @@ namespace NetworKit{
 	  // randomly sample a higher core node as neighbor
 	  // v is the dummy node
 	  if(e.v == dummy_node){
+	    is_inter_core_edge = true;
 	    do{
 	      e.v = g_.randomNode();
 	      // (u, v) \not\in E and core(v) > core(u)
@@ -117,7 +120,6 @@ namespace NetworKit{
 	    while(g_.hasEdge(e.u, e.v) || core_[e.v] <= core_[e.u]);
 	  }
     
-	  evaluated_edges_.insert(e);
 	  std::cerr << "trying (" << e.u << ", "<< e.v << ")" << std::endl;
 	  glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
 
@@ -127,6 +129,17 @@ namespace NetworKit{
 	  }
 
 	  count score = affected_nodes.size();
+	  // cache the edge score
+	  if(is_inter_core_edge){
+	    Edge real_edge = Edge(e.u, dummy_node);
+	    edge_score_[real_edge] = score;
+	    evaluated_edges_.insert(real_edge);
+	  }
+	  else {
+	    edge_score_[e] = score;
+	    evaluated_edges_.insert(e);
+	  }
+	  
 	  std::cerr << "affected nodes" << std::endl;
 	  std::copy(affected_nodes.begin(), affected_nodes.end(), std::ostream_iterator<node>(std::cerr, " "));
 	  affected_nodes.clear(); // don't forget the empty it
@@ -148,8 +161,37 @@ namespace NetworKit{
       return best_e;
     }
 
-    void Greedy::maintain(){
-      // to do
+    void Greedy::maintain(const Edge& e){
+      // adding e will change the incremental data structures
+      std::vector<node> affected_nodes;
+      int new_nc_id = glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
+      core::GLIST::CoreComponent& old_nc = nc_list_[nc_ids_[affected_nodes[0]]];
+      core::GLIST::CoreComponent& new_nc = nc_list_[new_nc_id];
+      for(node w: affected_nodes){
+	// change core
+	// change
+      	new_nc.nodes.insert(w);
+	if(core_[w] == node_rem(w)){ // core_ and rem_ should be updated
+	  new_nc.usable.insert(w);
+	}
+	old_nc.nodes.erase(w);
+	old_nc.usable.erase(w); // check?
+	for(Edge affected_e: n2e_dep_[w]){
+	  edge_score_.erase(affected_e);
+	  evaluated_edges_.erase(affected_e);	  
+	}
+      }
+
+      // update gain_max_      
+      if(new_nc.nodes.size() > gain_max_)
+	gain_max_ = new_nc.nodes.size();
+
+      // update current_score_
+      current_score_ = 0;
+      for(Edge e: evaluated_edges_){	
+	if(edge_score_[e] > current_score_)
+	  current_score_ = edge_score_[e];
+      }      
     }
     
     std::vector<Edge> Greedy::doGreedy(count k){
@@ -160,8 +202,15 @@ namespace NetworKit{
 	Edge e = bestEdge();
 	edges.push_back(e);
 	added_edges_.insert(e);
-	
-	maintain();
+
+	// insert the edge and update core_
+	glist_.Insert(e.u, e.v, g_, core_);
+
+	// update core_max_
+	core_max_ = *std::max_element(core_.begin(), core_.end());
+
+	// maintain the incremental data structures
+	maintain(e);
       }
       return edges;
     }

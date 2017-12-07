@@ -8,12 +8,14 @@ namespace NetworKit {
 	 *  /   \
 	 * /     \
 	 * 1 --- 2
-	 * ^    /|
+	 * |    /|
 	 * |   / |
 	 * | /   |
 	 * |/    |
 	 * 3 --- 4 --- 5
 	 *
+	 * node       : 0  1  2  3  4  5
+	 * core number: 2  2  2  2  2  1
 	 */    
     G = Graph(6, false, false);
     edges = {
