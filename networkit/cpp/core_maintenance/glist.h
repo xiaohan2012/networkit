@@ -32,7 +32,7 @@ namespace NetworKit{
 		 const std::vector<index>& core) const;
 
       struct CoreComponent {
-	std::vector<index> nodes;
+	std::unordered_set<index> nodes;
 	std::unordered_set<index> usable;
       };
       

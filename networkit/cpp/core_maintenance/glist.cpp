@@ -512,7 +512,7 @@ namespace NetworKit {
 	  
 	  visited[u] = true;
 	  
-	  nc_list[nc_id].nodes.push_back(u);
+	  nc_list[nc_id].nodes.insert(u);
 	  nc_ids[u] = nc_id;
 	  
 	  for(node v: graph.neighbors(u)){

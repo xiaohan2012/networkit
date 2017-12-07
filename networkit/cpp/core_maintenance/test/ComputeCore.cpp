@@ -122,9 +122,12 @@ TEST_P(ComputeCoreGTest, testCoreNumberAndRemainingDegree) {
     std::vector<index> nc_ids(N);
     glist.CoreGuidedBFS(G, core, nc_list, nc_ids);
 
-    ASSERT_THAT(nc_list[0].nodes, testing::ElementsAre(0));
+    
+    ASSERT_THAT(nc_list[0].nodes,
+		testing::ContainerEq(std::unordered_set<node>({0})));
 
-    ASSERT_THAT(nc_list[1].nodes, testing::ElementsAre(1, 2, 3, 4)); 
+    ASSERT_THAT(nc_list[1].nodes,
+		testing::ContainerEq(std::unordered_set<node>({1, 2, 3, 4}))); 
 
 
     ASSERT_THAT(nc_ids, testing::ElementsAre(0, 1, 1, 1, 1));
