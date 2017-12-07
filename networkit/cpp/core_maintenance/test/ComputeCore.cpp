@@ -136,13 +136,17 @@ TEST_P(ComputeCoreGTest, testCoreNumberAndRemainingDegree) {
     // std::cerr << "remove done" << std::endl;
     
     // FakeInsert
-    std::vector<node> affected_nodes;
+    // repeat the same process should return the same result
     // std::cerr << "fake inserting" << std::endl;
-    index new_nc_id = glist.FakeInsert(0, 4, G, core, nc_ids, affected_nodes);
-    // std::cerr << "done" << std::endl;
-    ASSERT_EQ(new_nc_id, 1);
-    ASSERT_THAT(affected_nodes, testing::ElementsAre(0));
-    ASSERT_THAT(core, testing::ElementsAre(2, 3, 3, 3, 3));
+    for(index i=0; i<10; i++){
+      std::vector<node> affected_nodes;
+      // std::cerr << "round: " << i << std::endl;
+      index new_nc_id = glist.FakeInsert(0, 4, G, core, nc_ids, affected_nodes);
+      // std::cerr << "done" << std::endl;
+      ASSERT_EQ(new_nc_id, 1);
+      ASSERT_THAT(affected_nodes, testing::ElementsAre(0));
+      ASSERT_THAT(core, testing::ElementsAre(2, 3, 3, 3, 3));
+    }
   }    
 } /* namespace NetworKit */
 

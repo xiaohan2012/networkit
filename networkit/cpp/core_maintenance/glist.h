@@ -47,9 +47,8 @@ namespace NetworKit{
 		     const std::vector<node>& nc_ids,
 		     std::vector<node>& affected_nodes);
 
-      void FakeRemove(const index v1, const index v2,
-			     Graph& graph,
-			     std::vector<index>& core);
+      void Checkpoint();
+      void Rollback();
       
       void PrintNCList(const std::vector<CoreComponent>& nc_list);
       /*
@@ -107,6 +106,20 @@ namespace NetworKit{
       gadget::Treap tree_;
       gadget::MinHeap heap_;
       std::vector<node> garbage_;
+
+      // for checkpoint
+      std::vector<node> cp_head_;
+      std::vector<node> cp_tail_;
+      std::vector<ListNode> cp_node_;
+      std::vector<node> cp_mcd_;
+      std::vector<node> cp_deg_;
+      std::vector<node> cp_rank_;
+      std::vector<node> cp_root_;
+      std::vector<bool> cp_evicted_;
+      std::vector<bool> cp_visited_;
+      gadget::Treap cp_tree_;
+      gadget::MinHeap cp_heap_;
+      std::vector<node> cp_garbage_;      
     };
   }  // namespace core
 }
