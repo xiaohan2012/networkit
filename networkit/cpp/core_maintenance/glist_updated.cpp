@@ -209,6 +209,53 @@ namespace NetworKit {
       graph.removeEdge(v1, v2);
       core = cp_core;  // copy back
       return nc_ids[target];
+      
     }
+
+    void GLIST::CoreGuidedBFS(const Graph& graph,
+			      const std::vector<index>& core,
+			      std::vector<CoreComponent>& nc_list,
+			      std::vector<index>& nc_ids){
+      // std::cerr << "[          ] run " << std::endl;
+      // reset the status
+      std::fill(nc_ids.begin(), nc_ids.end(), 0);
+      for(auto nc: nc_list){
+	nc.nodes.clear();
+	nc.usable.clear();
+      }
+      
+      int n = graph.numberOfNodes();
+      std::vector<bool> visited(n, false);
+      std::queue<node> q;
+
+      int nc_id = -1;
+      for(index i: graph.nodes()){
+	if(visited[i]) continue;
+
+	nc_id++; //  a new component
+
+	q.push(i);
+	while(!q.empty()){	 
+	  node u = q.front();
+	  q.pop();
+
+	  // std::cerr << "visiting: " << u << std::endl;
+	  
+	  visited[u] = true;
+	  
+	  nc_list[nc_id].nodes.insert(u);
+	  nc_ids[u] = nc_id;
+	  
+	  for(node v: graph.neighbors(u)){
+	    if(!visited[v] && core[u] == core[v]){
+	      // std::cerr << "same core: " << v << std::endl;
+	      visited[v] = true;
+	      q.push(v);
+	      // nc_list[nc_id].nodes.push_back(v);
+	    }
+	  }
+	}
+      }
+    }    
   }
 }

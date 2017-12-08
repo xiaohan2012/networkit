@@ -18,6 +18,7 @@ namespace NetworKit {
     CoreMaximization::Greedy greedy(G, G.numberOfNodes());
 
     ASSERT_THAT(greedy.core_, testing::ElementsAre(2, 2, 2, 2, 2, 1));
+    ASSERT_THAT(greedy.nc_ids_, testing::ElementsAre(0, 0, 0, 0, 0, 1));
 
     ASSERT_EQ(greedy.node_rem(0), 2);
     ASSERT_EQ(greedy.node_rem(5), 1);
@@ -92,16 +93,55 @@ namespace NetworKit {
   }
 
   TEST_F(GreedyTest, testMaintain){
+    // setup
     CoreMaximization::Greedy greedy(G, G.numberOfNodes());
-    greedy.maintain(Edge(0, 3));
-    greedy.nc_list_[0].nodes;
+    Edge e (0, 3);    
+    greedy.glist_.Insert(e.u, e.v, greedy.g_, greedy.core_);
 
-    // should return a new CoreComponent
-    ASSERT_THAT(greedy.nc_list_[0].nodes,
-    	        testing::ContainerEq(std::unordered_set<index>({})));
-    ASSERT_EQ(greedy.nc_list_[0].usable.size(),
-	      testing::ContainerEq(std::unordered_set<index>({}))); 
+    // real stuff
+    greedy.maintain(e);
+
+    // nc_list_
+    // nodes
+    // usable
+    greedy.glist_.PrintNCList(greedy.nc_list_);
     
+    ASSERT_THAT(greedy.nc_list_[0].nodes,
+    		testing::ContainerEq(std::unordered_set<index>({4})));
+    ASSERT_THAT(greedy.nc_list_[0].usable,
+    		testing::ContainerEq(std::unordered_set<index>({4})));
+    ASSERT_THAT(greedy.nc_list_[1].nodes,
+    		testing::ContainerEq(std::unordered_set<index>({5})));
+    ASSERT_THAT(greedy.nc_list_[1].usable,
+    		testing::ContainerEq(std::unordered_set<index>({5})));
+    ASSERT_THAT(greedy.nc_list_[2].nodes,
+    		testing::ContainerEq(std::unordered_set<index>({0, 1, 2, 3})));
+    ASSERT_THAT(greedy.nc_list_[2].usable,
+    		testing::ContainerEq(std::unordered_set<index>({0})));
+
+    // nc_ids_
+    ASSERT_THAT(greedy.nc_ids_, testing::ElementsAre(2, 2, 2, 2, 0, 1));
+
+    // now only inter-core edges exist
+    // bucket_1_
+    ASSERT_THAT(greedy.bucket_1_[1],
+    		testing::ContainerEq(std::unordered_set<index>({4, 5})));
+    for(index i=2; i<7; i++) {
+      ASSERT_EQ(greedy.bucket_1_[i].size(), 0);  
+    }    
+
+    
+    // bucket_2_
+    ASSERT_THAT(greedy.bucket_2_[1],
+    		testing::ContainerEq(std::unordered_set<index>({1})));
+    for(index i=2; i<7; i++) {
+      ASSERT_EQ(greedy.bucket_2_[i].size(), 0);  
+    }
+
+
+    ASSERT_EQ(greedy.current_score_, 1);
+    ASSERT_EQ(greedy.core_max_, 3);
+    ASSERT_EQ(greedy.gain_max_, 4);
   }
   TEST_F(GreedyTest, testDoGreedy){
     // CoreMaximization::Greedy greedy(G, G.numberOfNodes());

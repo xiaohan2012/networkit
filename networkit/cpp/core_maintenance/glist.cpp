@@ -16,8 +16,8 @@
 namespace NetworKit {
   namespace core {
     GLIST::GLIST(const count n): n_(n), tree_(n_), heap_(n_), cp_tree_(n_), cp_heap_(n_) {
-      head_ = std::vector<node>(n_, -1);
-      tail_ = std::vector<node>(n_, -1);
+      head_ = std::vector<node>(n_, n_+1); // change to
+      tail_ = std::vector<node>(n_, n_+1);
       node_ = std::vector<ListNode>(n_ + 1);
       mcd_  = std::vector<node>(n_, 0);
       deg_  = std::vector<node>(n_, 0);
@@ -94,7 +94,7 @@ namespace NetworKit {
 	}
 	if (init_idx) {
 	  node_[v].rem = rem;
-	  if (head_[k] == -1) {
+	  if (head_[k] == n_+1) {
 	    node_[v].prev = node_[v].next = n_;
 	    head_[k] = tail_[k] = v;
 	  } else {
@@ -146,11 +146,11 @@ namespace NetworKit {
       //
       std::vector<index> swap;
       // the set of vertices, denoted as A, that doesn't need to be updated
-      index list_h = -1, list_t = -1;
+      index list_h = n_+1, list_t = n_+1;
       for (index cur = head_[K]; n_ != cur; ) {
 	if (heap_.Empty() || (node_[cur].ext == 0 && node_[cur].rem <= K)) {
 	  const index start = cur;
-	  const index end = heap_.Empty() ? tail_[K] : node_[heap_.Top().val].prev;
+	  const index end = heap_.Empty() ? (tail_[K] != n_+1) : node_[heap_.Top().val].prev;
 	  // advance the cur pointer
 	  cur = node_[end].next;
 	  // remove this sub-list and reinsert it into A
@@ -158,7 +158,7 @@ namespace NetworKit {
 	  node_[node_[end].next].prev = node_[start].prev;
 	  node_[start].prev = n_;
 	  node_[end].next = n_;
-	  if (-1 == list_h) {
+	  if (n_+1 == list_h) {
 	    list_h = start;
 	    list_t = end;
 	  } else {
@@ -179,7 +179,7 @@ namespace NetworKit {
 	  // insert into A
 	  node_[node_[cur].prev].next = node_[cur].next;
 	  node_[node_[cur].next].prev = node_[cur].prev;
-	  if (likely(-1 != list_h)) {
+	  if (likely(n_+1 != list_h)) {
 	    node_[cur].next = n_;
 	    node_[cur].prev = list_t;
 	    node_[list_t].next = cur;
@@ -209,13 +209,16 @@ namespace NetworKit {
       ASSERT(heap_.Empty());
       head_[K] = list_h;
       tail_[K] = list_t;
+      std::cerr << "swap: tree_.Delete" << std::endl;
       for (const index v : swap) {
+	std::cerr << "swap" << v << std::endl;	
 	tree_.Delete(v, root_[K]);
+	std::cerr << "eehhh" << std::endl;	
 	tree_.InsertAfter(v, node_[v].prev, root_[K]);
       }
       // cope with those vertices whose core need to be updated
       if (evicted_[src]) {
-	auto tail = -1; // tail
+	auto tail = n_+1; // tail
 	for (auto v = src; n_ != v; v = node_[v].next) {
 	  ++core[v];
 	  node_[v].ext = 0;
@@ -230,19 +233,25 @@ namespace NetworKit {
 	    }
 	  }
 	  // remove from the current tree
+	  std::copy(root_.begin(), root_.end(), std::ostream_iterator<node>(std::cerr, " "));
+	  std::cerr << std::endl;	  
+	  std::cerr << "K=" << K << std::endl;	  
+	  std::cerr << "tree.Delete(v, root_[K]): v=" << v << ", root_[K+1]=" << root_[K + 1] <<std::endl;	  
 	  tree_.Delete(v, root_[K]);
 	}
 	for (auto v = tail; n_ != v; v = node_[v].prev) {
 	  evicted_[v] = false;
+	  std::cerr << "tree_.Insert(v, true, root_[K + 1]) " << root_[K + 1] << std::endl;	  
 	  tree_.Insert(v, true, root_[K + 1]);
 	}
 	// merge list
-	if (-1 == head_[K + 1]) {
+	if (n_+1 == head_[K + 1]) {
 	  head_[K + 1] = src;
 	  tail_[K + 1] = tail;
 	} else {
 	  node_[head_[K + 1]].prev = tail;
 	  node_[tail].next = head_[K + 1];
+	  
 	  head_[K + 1] = src;
 	}
       }
@@ -305,15 +314,15 @@ namespace NetworKit {
       }
       if (!changed.empty()) {
 
-	while (n_ != head_[K] && evicted_[head_[K]]) {
+	while (n_ > head_[K] && evicted_[head_[K]]) {
 	  head_[K] = node_[head_[K]].next;
 	}
 
-	while (n_ != tail_[K] && evicted_[tail_[K]]) {
+	while (n_ > tail_[K] && evicted_[tail_[K]]) {
 	  tail_[K] = node_[tail_[K]].prev;
 	}
 	if (n_ == head_[K]) {
-	  head_[K] = tail_[K] = -1;
+	  head_[K] = tail_[K] = n_+1;
 	}
 
 	for (const index v : changed) {
@@ -349,7 +358,7 @@ namespace NetworKit {
 	  node_[node_[v].prev].next = node_[v].next;
 	  node_[v].next = node_[v].prev = n_;
 	  // merge list
-	  if (-1 == head_[K - 1]) {
+	  if (n_+1 == head_[K - 1]) {
 	    head_[K - 1] = tail_[K - 1] = v;
 	  } else {
 	    node_[tail_[K - 1]].next = v;
@@ -378,8 +387,8 @@ namespace NetworKit {
       for (index v = 0; v < n_; ++v) {
 	if (vis[v]) continue;
 	const index K = core[v];
-	index tail = -1;
-	ASSERT(-1 != head_[K]);
+	index tail = n_+1;
+	ASSERT(n_+1 != head_[K]);
 	for (index tmp = head_[K]; n_ != tmp; tmp = node_[tmp].next) {
 	  ASSERT(!vis[tmp]);
 	  vis[tmp] = true;
@@ -489,51 +498,13 @@ namespace NetworKit {
 	}
       }
     }
-
-    void GLIST::CoreGuidedBFS(const Graph& graph,
-			      const std::vector<index>& core,
-			      std::vector<CoreComponent>& nc_list,
-			      std::vector<index>& nc_ids){
-      // std::cerr << "[          ] run " << std::endl;
-      int n = graph.numberOfNodes();
-      std::vector<bool> visited(n, false);
-      std::queue<node> q;
-
-      int nc_id = -1;
-      for(index i: graph.nodes()){
-	if(visited[i]) continue;
-
-	nc_id++; //  a new component
-
-	q.push(i);
-	while(!q.empty()){	 
-	  node u = q.front();
-	  q.pop();
-
-	  // std::cerr << "visiting: " << u << std::endl;
-	  
-	  visited[u] = true;
-	  
-	  nc_list[nc_id].nodes.insert(u);
-	  nc_ids[u] = nc_id;
-	  
-	  for(node v: graph.neighbors(u)){
-	    if(!visited[v] && core[u] == core[v]){
-	      // std::cerr << "same core: " << v << std::endl;
-	      visited[v] = true;
-	      q.push(v);
-	      // nc_list[nc_id].nodes.push_back(v);
-	    }
-	  }
-	}
-      }
-    }
+    
 
         
 
 
     void GLIST::PrintNCList(const std::vector<CoreComponent>& nc_list){
-      for(int i=0; i < nc_list.size(); i++){
+      for(index i=0; i < nc_list.size(); i++){
     	GLIST::CoreComponent nc = nc_list[i];
     	if(nc.nodes.size() > 0){
     	  std::cerr << "i=" << i << " with nodes: " << std::endl;

@@ -162,6 +162,11 @@ namespace NetworKit{
     }
 
     void Greedy::maintain(const Edge& e){
+      std::copy(core_.begin(), core_.end(), std::ostream_iterator<node>(std::cerr, " "));
+
+      // update nc_list_ and nc_ids_
+      glist_.CoreGuidedBFS(g_, core_, nc_list_, nc_ids_);
+	
       // adding e will change the incremental data structures
       std::vector<node> affected_nodes;
       int new_nc_id = glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
@@ -174,8 +179,11 @@ namespace NetworKit{
 	if(core_[w] == node_rem(w)){ // core_ and rem_ should be updated
 	  new_nc.usable.insert(w);
 	}
+	nc_ids_[w] = new_nc_id;
+
 	old_nc.nodes.erase(w);
 	old_nc.usable.erase(w); // check?
+	
 	for(Edge affected_e: n2e_dep_[w]){
 	  edge_score_.erase(affected_e);
 	  evaluated_edges_.erase(affected_e);	  
@@ -206,6 +214,7 @@ namespace NetworKit{
 	// insert the edge and update core_
 	glist_.Insert(e.u, e.v, g_, core_);
 
+	
 	// update core_max_
 	core_max_ = *std::max_element(core_.begin(), core_.end());
 

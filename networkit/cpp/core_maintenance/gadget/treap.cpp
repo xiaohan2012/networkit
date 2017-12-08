@@ -81,7 +81,7 @@ namespace NetworKit{
 	if (n_ != nd_[x].p) {
 	  if (x == nd_[nd_[x].p].l) {
 	    p = &nd_[nd_[x].p].l;
-	  } else {
+	  } else {	    
 	    p = &nd_[nd_[x].p].r;
 	  }
 	}
