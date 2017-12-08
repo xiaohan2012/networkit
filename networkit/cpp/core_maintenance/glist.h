@@ -21,15 +21,15 @@ namespace NetworKit{
 
       void ComputeCore(const Graph& graph,
 		       const bool init_idx,
-		       std::vector<node>& core);
+		       std::vector<count>& core);
       void Insert(const index v1, const index v2,
 		  Graph& graph,
-		  std::vector<index>& core);
+		  std::vector<count>& core);
       void Remove(const index v1, const index v2,
 		  Graph& graph,
-		  std::vector<index>& core);
+		  std::vector<count>& core);
       void Check(const Graph& graph,
-		 const std::vector<index>& core) const;
+		 const std::vector<count>& core) const;
 
       struct CoreComponent {
 	std::unordered_set<index> nodes;
@@ -37,7 +37,7 @@ namespace NetworKit{
       };
       
       void CoreGuidedBFS(const Graph& graph,
-			 const std::vector<index>& core,
+			 const std::vector<count>& core,
 			 std::vector<CoreComponent>& nc_list,
 			 std::vector<index>& nc_ids);
 
@@ -85,41 +85,41 @@ namespace NetworKit{
 
       void Keep(const Graph& graph,
 		const index v, const index K,
-		const std::vector<index>& core,
-		index& list_t, std::vector<index>& swap);
+		const std::vector<count>& core,
+		int& list_t, std::vector<int>& swap);
       void PropagateDismissal(const Graph& graph,
 			      const index K, const index v,
-			      std::vector<index>& core,
-			      std::vector<index>& to_be_clear,
-			      std::vector<index>& changed);
+			      std::vector<count>& core,
+			      std::vector<int>& to_be_clear,
+			      std::vector<int>& changed);
 
-      index n_;
-      std::vector<node> head_;
-      std::vector<node> tail_;
+      count n_;
+      std::vector<int> head_;
+      std::vector<int> tail_;
       std::vector<ListNode> node_;
-      std::vector<node> mcd_;
-      std::vector<node> deg_;
-      std::vector<node> rank_;
-      std::vector<node> root_;
+      std::vector<int> mcd_;
+      std::vector<int> deg_;
+      std::vector<int> rank_;
+      std::vector<int> root_;
       std::vector<bool> evicted_;
       std::vector<bool> visited_;
       gadget::Treap tree_;
       gadget::MinHeap heap_;
-      std::vector<node> garbage_;
+      std::vector<int> garbage_;
 
       // for checkpoint
-      std::vector<node> cp_head_;
-      std::vector<node> cp_tail_;
-      std::vector<ListNode> cp_node_;
-      std::vector<node> cp_mcd_;
-      std::vector<node> cp_deg_;
-      std::vector<node> cp_rank_;
-      std::vector<node> cp_root_;
-      std::vector<bool> cp_evicted_;
-      std::vector<bool> cp_visited_;
-      gadget::Treap cp_tree_;
-      gadget::MinHeap cp_heap_;
-      std::vector<node> cp_garbage_;      
+      // std::vector<int> cp_head_;
+      // std::vector<int> cp_tail_;
+      // std::vector<ListNode> cp_node_;
+      // std::vector<int> cp_mcd_;
+      // std::vector<int> cp_deg_;
+      // std::vector<int> cp_rank_;
+      // std::vector<int> cp_root_;
+      // std::vector<bool> cp_evicted_;
+      // std::vector<bool> cp_visited_;
+      // gadget::Treap cp_tree_;
+      // gadget::MinHeap cp_heap_;
+      // std::vector<int> cp_garbage_;      
     };
   }  // namespace core
 }

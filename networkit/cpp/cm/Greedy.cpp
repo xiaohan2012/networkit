@@ -162,27 +162,33 @@ namespace NetworKit{
     }
 
     void Greedy::maintain(const Edge& e){
+      std::cerr << "core number" << std::endl;
       std::copy(core_.begin(), core_.end(), std::ostream_iterator<node>(std::cerr, " "));
 
       // update nc_list_ and nc_ids_
+      std::cerr << "cored guided BFS" << std::endl;
       glist_.CoreGuidedBFS(g_, core_, nc_list_, nc_ids_);
 	
       // adding e will change the incremental data structures
       std::vector<node> affected_nodes;
-      int new_nc_id = glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
-      core::GLIST::CoreComponent& old_nc = nc_list_[nc_ids_[affected_nodes[0]]];
-      core::GLIST::CoreComponent& new_nc = nc_list_[new_nc_id];
+      std::cerr << "Fake Insert" << std::endl;
+      glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
+      // std::cerr << "new_nc_id=" << new_nc_id << std::endl;
+      // core::GLIST::CoreComponent& old_nc = nc_list_[nc_ids_[affected_nodes[0]]];
+      // core::GLIST::CoreComponent& new_nc = nc_list_[new_nc_id];
+            
+      
       for(node w: affected_nodes){
 	// change core
 	// change
-      	new_nc.nodes.insert(w);
-	if(core_[w] == node_rem(w)){ // core_ and rem_ should be updated
-	  new_nc.usable.insert(w);
-	}
-	nc_ids_[w] = new_nc_id;
+      	// new_nc.nodes.insert(w);
+	// if(core_[w] == node_rem(w)){ // core_ and rem_ should be updated
+	//   new_nc.usable.insert(w);
+	// }
+	// nc_ids_[w] = new_nc_id;
 
-	old_nc.nodes.erase(w);
-	old_nc.usable.erase(w); // check?
+	// old_nc.nodes.erase(w);
+	// old_nc.usable.erase(w); // check?
 	
 	for(Edge affected_e: n2e_dep_[w]){
 	  edge_score_.erase(affected_e);
@@ -190,10 +196,13 @@ namespace NetworKit{
 	}
       }
 
-      // update gain_max_      
-      if(new_nc.nodes.size() > gain_max_)
-	gain_max_ = new_nc.nodes.size();
 
+      for(auto nc: nc_list_){
+	if(nc.nodes.size() > gain_max_){
+	  gain_max_ = nc.nodes.size();
+	}
+      }
+      
       // update current_score_
       current_score_ = 0;
       for(Edge e: evaluated_edges_){	

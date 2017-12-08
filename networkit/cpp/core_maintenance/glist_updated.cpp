@@ -14,35 +14,35 @@
 namespace NetworKit {
   namespace core {
 
-    void GLIST::Checkpoint(){
-      cp_head_     =     head_;   
-      cp_tail_     =     tail_;   
-      cp_node_     =     node_;   
-      cp_mcd_      =     mcd_;    
-      cp_deg_      =     deg_;    
-      cp_rank_     =     rank_;   
-      cp_root_     =     root_;   
-      cp_evicted_  =     evicted_;
-      cp_visited_  =     visited_;
-      cp_tree_     =     tree_;   
-      cp_heap_     =     heap_;   
-      cp_garbage_  =     garbage_; 
-    }
+    // void GLIST::Checkpoint(){
+    //   cp_head_     =     head_;   
+    //   cp_tail_     =     tail_;   
+    //   cp_node_     =     node_;   
+    //   cp_mcd_      =     mcd_;    
+    //   cp_deg_      =     deg_;    
+    //   cp_rank_     =     rank_;   
+    //   cp_root_     =     root_;   
+    //   cp_evicted_  =     evicted_;
+    //   cp_visited_  =     visited_;
+    //   cp_tree_     =     tree_;   
+    //   cp_heap_     =     heap_;   
+    //   cp_garbage_  =     garbage_; 
+    // }
     
-    void GLIST::Rollback(){
-      head_     =     cp_head_;   
-      tail_     =     cp_tail_;   
-      node_     =     cp_node_;   
-      mcd_      =     cp_mcd_;    
-      deg_      =     cp_deg_;    
-      rank_     =     cp_rank_;   
-      root_     =     cp_root_;   
-      evicted_  =     cp_evicted_;
-      visited_  =     cp_visited_;
-      tree_     =     cp_tree_;   
-      heap_     =     cp_heap_;   
-      garbage_  =     cp_garbage_; 
-    }
+    // void GLIST::Rollback(){
+    //   head_     =     cp_head_;   
+    //   tail_     =     cp_tail_;   
+    //   node_     =     cp_node_;   
+    //   mcd_      =     cp_mcd_;    
+    //   deg_      =     cp_deg_;    
+    //   rank_     =     cp_rank_;   
+    //   root_     =     cp_root_;   
+    //   evicted_  =     cp_evicted_;
+    //   visited_  =     cp_visited_;
+    //   tree_     =     cp_tree_;   
+    //   heap_     =     cp_heap_;   
+    //   garbage_  =     cp_garbage_; 
+    // }
     
     int GLIST::FakeInsert(const node v1, const node v2,
 			  Graph& graph,
@@ -54,7 +54,7 @@ namespace NetworKit {
 	and return the new nc id
       */
       // prepare for restoration
-      Checkpoint();
+      // Checkpoint();
       
       // bound checking
       ASSERT(v1 >= 0);
@@ -87,13 +87,13 @@ namespace NetworKit {
       // preparing the heap
       heap_.Insert(GetRank(src), src);
       //
-      std::vector<index> swap;
+      std::vector<int> swap;
       // the set of vertices, denoted as A, that doesn't need to be updated
-      index list_h = -1, list_t = -1;
-      for (index cur = head_[K]; n_ != cur; ) {
+      int list_h = -1, list_t = -1;
+      for (int cur = head_[K]; n_ != cur; ) {
 	if (heap_.Empty() || (node_[cur].ext == 0 && node_[cur].rem <= K)) {
-	  const index start = cur;
-	  const index end = heap_.Empty() ? tail_[K] : node_[heap_.Top().val].prev;
+	  const int start = cur;
+	  const int end = heap_.Empty() ? tail_[K] : node_[heap_.Top().val].prev;
 	  // advance the cur pointer
 	  cur = node_[end].next;
 	  // remove this sub-list and reinsert it into A
@@ -116,8 +116,8 @@ namespace NetworKit {
 	ASSERT(heap_.Top().val == cur);
 	heap_.Delete(heap_.Top().key);
 	// deal with cur
-	const index next = node_[cur].next;
-	const index cur_deg = node_[cur].ext + node_[cur].rem;
+	const int next = node_[cur].next;
+	const int cur_deg = node_[cur].ext + node_[cur].rem;
 	if (likely(cur_deg <= K)) {
 	  // insert into A
 	  node_[node_[cur].prev].next = node_[cur].next;
@@ -154,10 +154,10 @@ namespace NetworKit {
       tail_[K] = list_t;
 
       // **DIFFERENCE** because of fake insert      
-      // for (const index v : swap) {
-      	// tree_.Delete(v, root_[K]);
-      	// tree_.InsertAfter(v, node_[v].prev, root_[K]);
-      // }
+      for (const int v : swap) {
+      	tree_.Delete(v, root_[K]);
+      	tree_.InsertAfter(v, node_[v].prev, root_[K]);
+      }
       
       // cope with those vertices whose core need to be updated
       if (evicted_[src]) {
@@ -182,12 +182,12 @@ namespace NetworKit {
 	  }
 	  // remove from the current tree
 	  // **DIFFERENCE** because of fake insert
-	  // tree_.Delete(v, root_[K]);
+	  tree_.Delete(v, root_[K]);
 	}
 	for (auto v = tail; n_ != v; v = node_[v].prev) {
 	  evicted_[v] = false;
 	  // **DIFFERENCE** because of fake insert	  
-	  // tree_.Insert(v, true, root_[K + 1]);
+	  tree_.Insert(v, true, root_[K + 1]);
 	}
 	// merge list
 	if (-1 == head_[K + 1]) {
@@ -199,17 +199,18 @@ namespace NetworKit {
 	  head_[K + 1] = src;
 	}
       }
-      for (const index v : garbage_) rank_[v] = 0;
+      for (const int v : garbage_) rank_[v] = 0;
       garbage_.clear();
 
       // std::cerr << "Remove(" << v1 << "," << v2 << ")" << std::endl; // 0, 4
       /* roll back */
       // FakeRemove(v1, v2, graph, core);
-      Rollback();
-      graph.removeEdge(v1, v2);
-      core = cp_core;  // copy back
-      return nc_ids[target];
-      
+      // Rollback();
+      // graph.removeEdge(v1, v2);
+      // core = cp_core;  // copy back
+      Remove(v1, v2,
+	     graph, core);
+      return nc_ids[target];      
     }
 
     void GLIST::CoreGuidedBFS(const Graph& graph,
@@ -219,7 +220,7 @@ namespace NetworKit {
       // std::cerr << "[          ] run " << std::endl;
       // reset the status
       std::fill(nc_ids.begin(), nc_ids.end(), 0);
-      for(auto nc: nc_list){
+      for(auto& nc: nc_list){
 	nc.nodes.clear();
 	nc.usable.clear();
       }

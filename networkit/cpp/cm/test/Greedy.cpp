@@ -107,17 +107,17 @@ namespace NetworKit {
     greedy.glist_.PrintNCList(greedy.nc_list_);
     
     ASSERT_THAT(greedy.nc_list_[0].nodes,
-    		testing::ContainerEq(std::unordered_set<index>({4})));
-    ASSERT_THAT(greedy.nc_list_[0].usable,
-    		testing::ContainerEq(std::unordered_set<index>({4})));
-    ASSERT_THAT(greedy.nc_list_[1].nodes,
-    		testing::ContainerEq(std::unordered_set<index>({5})));
-    ASSERT_THAT(greedy.nc_list_[1].usable,
-    		testing::ContainerEq(std::unordered_set<index>({5})));
-    ASSERT_THAT(greedy.nc_list_[2].nodes,
     		testing::ContainerEq(std::unordered_set<index>({0, 1, 2, 3})));
-    ASSERT_THAT(greedy.nc_list_[2].usable,
+    ASSERT_THAT(greedy.nc_list_[0].usable,
     		testing::ContainerEq(std::unordered_set<index>({0})));
+    ASSERT_THAT(greedy.nc_list_[1].nodes,
+    		testing::ContainerEq(std::unordered_set<index>({4})));
+    ASSERT_THAT(greedy.nc_list_[1].usable,
+    		testing::ContainerEq(std::unordered_set<index>({4})));
+    ASSERT_THAT(greedy.nc_list_[2].nodes,
+    		testing::ContainerEq(std::unordered_set<index>({5})));
+    ASSERT_THAT(greedy.nc_list_[2].usable,
+    		testing::ContainerEq(std::unordered_set<index>({5})));
 
     // nc_ids_
     ASSERT_THAT(greedy.nc_ids_, testing::ElementsAre(2, 2, 2, 2, 0, 1));

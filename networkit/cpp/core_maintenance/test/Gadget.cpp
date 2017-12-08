@@ -8,9 +8,9 @@ namespace NetworKit{
   TEST(GadgetTest, testTreap) {
     count n = 1000000;
     gadget::Treap tree(n);
-    std::vector<index> roots(100, n);
-    std::vector<index> counts(100, 0);
-    std::vector<index> numbers(n);
+    std::vector<int> roots(100, n);
+    std::vector<int> counts(100, 0);
+    std::vector<int> numbers(n);
 
     for (index i = 0; i < n; ++i) {
       numbers[i] = rand() % 100;

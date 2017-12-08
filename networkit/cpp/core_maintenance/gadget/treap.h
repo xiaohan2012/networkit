@@ -11,32 +11,32 @@ namespace NetworKit{
     public:
       explicit Treap(const count n);
 
-      void Insert(const index x, const bool f, index& r);
-      void InsertAfter(const index x, const index y, index& r);
-      void Delete(const index x, index& r);
-      index Merge(const index r1, const index r2);
-      index Rank(const index x) const;
-      index Select(const index r, const index rank) const;
-      index Root(const index x) const;
-      index Minimum(const index x) const;
-      index Maximum(const index x) const;
-      index Size(const index r) const;
-      void Check(const index r) const;
+      void Insert(const int x, const bool f, int& r);
+      void InsertAfter(const int x, const int y, int& r);
+      void Delete(const int x, int& r);
+      int Merge(const int r1, const int r2);
+      int Rank(const int x) const;
+      int Select(const int r, const int rank) const;
+      int Root(const int x) const;
+      int Minimum(const int x) const;
+      int Maximum(const int x) const;
+      int Size(const int r) const;
+      void Check(const int r) const;
 
     private:
       struct TreapNode final {
-	index p;  // the parent
-	index l;  // the left child
-	index r;  // the right child
-	index s;  // the size of the subtree rooted at this node
-	index w;  // the priority
+	int p;  // the parent
+	int l;  // the left child
+	int r;  // the right child
+	int s;  // the size of the subtree rooted at this node
+	int w;  // the priority
       };
 
-      void LeftRotate(index& x);
-      void RightRotate(index& x);
-      void SubCheck(const index x) const;
+      void LeftRotate(int& x);
+      void RightRotate(int& x);
+      void SubCheck(const int x) const;
 
-      index n_;
+      count n_;
       std::vector<TreapNode> nd_;
     };
   }  // namespace gadget
