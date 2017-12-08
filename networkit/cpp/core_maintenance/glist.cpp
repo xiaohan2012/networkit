@@ -499,21 +499,6 @@ namespace NetworKit {
       }
     }
     
-
         
-
-
-    void GLIST::PrintNCList(const std::vector<CoreComponent>& nc_list){
-      for(index i=0; i < nc_list.size(); i++){
-    	GLIST::CoreComponent nc = nc_list[i];
-    	if(nc.nodes.size() > 0){
-    	  std::cerr << "i=" << i << " with nodes: " << std::endl;
-	  for(auto i: nc.nodes){
-	    std::cerr << i << ", ";
-	  }
-    	}
-	std::cerr << std::endl;
-      }
-    }
   }  // namespace core
 }
