@@ -62,12 +62,12 @@ namespace NetworKit {
 
     std::unordered_set<Edge> inter_edges;    
     
-    for(int i=0; i<3; i++){
+    for(int i=0; i<4; i++){
       Edge e = greedy.getCandidateEdge();
-      greedy.evaluated_edges_.insert(e);
+      greedy.proposed_edges_.insert(e);
       inter_edges.insert(e);
     }
-    std::unordered_set<Edge> expected = {Edge(0, 3), Edge(0, 4), Edge(1, 4)};
+    std::unordered_set<Edge> expected = {Edge(5, 6), Edge(0, 3), Edge(0, 4), Edge(1, 4)};
     // for(auto e: inter_edges){
     //   std::cerr << e.u << "," << e.v << std::endl;
     // }
@@ -205,9 +205,20 @@ namespace NetworKit {
   TEST_F(GreedyTest, testDoGreedyTwoEdges){
     CoreMaximization::Greedy greedy(G, G.numberOfNodes());
     std::vector<Edge> edges = greedy.doGreedy(2);
-    ASSERT_THAT(edges,
-		testing::ElementsAre(Edge(0, 4), Edge(5, 1)));
+    ASSERT_EQ(edges.size(), 2);
+    ASSERT_EQ(edges[0], Edge(0, 4));
+    ASSERT_EQ(edges[1].u, 5);
 
+    std::unordered_set<node> execpted_nodes({0, 1, 2, 3, 4});
+    ASSERT_TRUE(execpted_nodes.find(edges[1].v) != execpted_nodes.end());
+  }
+
+  TEST_F(GreedyTest, testDoGreedyUntilFullyConnected){
+    CoreMaximization::Greedy greedy(G, G.numberOfNodes());
+    std::vector<Edge> edges = greedy.doGreedy(7); // 7 more edges to make it clique
+    ASSERT_THAT(greedy.core_, testing::ElementsAre(5, 5, 5, 5, 5, 5));
+    // ASSERT_EQ(edges.size(), 3);
+    // ASSERT_EQ(edges[2], Edge());
   }
 }
 

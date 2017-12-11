@@ -3,7 +3,7 @@
 namespace NetworKit{
   namespace CoreMaximization {
     
-    Greedy::Greedy(Graph g, count n): g_(g), n_(n), dummy_node(n), core_(n), nc_list_(n), nc_ids_(n),  glist_(n), bucket_1_(n+1, std::unordered_set<index>()), bucket_2_(n+1, std::unordered_set<index>()), current_score_(0){
+    Greedy::Greedy(Graph g, count n): g_(g), n_(n), dummy_node(n), core_(n), nc_list_(n), nc_ids_(n),  glist_(n), bucket_1_(n+1, std::unordered_set<index>()), bucket_2_(n+1, std::unordered_set<index>()), current_score_(0), best_edge_(dummy_node, dummy_node) {
       glist_.ComputeCore(g, true, core_);
 
       core_max_ = *std::max_element(core_.begin(), core_.end());
@@ -14,6 +14,7 @@ namespace NetworKit{
 
       // gain_max_
       // clique shouldn't be counted here
+      gain_max_ = 0;
       for(auto nc: nc_list_){
 	if(nc.nodes.size() > gain_max_){
 	  gain_max_ = nc.nodes.size(); 
@@ -42,6 +43,7 @@ namespace NetworKit{
 	if(nc.nodes.size() > 1)
 	  bucket_2_[nc.nodes.size()].insert(i);
       }
+
     }
     
     // wrapper for glist::core::ListNode.rem
@@ -59,7 +61,7 @@ namespace NetworKit{
 	  // std::cerr << "u=" << u << std::endl;
 	  Edge cand_edge(u, dummy_node, true);
 	  if(((g_.degree(u) < n_ - 1) && core_[u] < core_max_) // 2nd condition, needs to link to higher core
-	     // && (evaluated_edges_.find(cand_edge) ==  evaluated_edges_.end()) // not evaluated
+	     && (proposed_edges_.find(cand_edge) ==  proposed_edges_.end()) // not proposed
 	     && (added_edges_.find(cand_edge) ==  added_edges_.end()) // not added
 	     ){
 	    return cand_edge;
@@ -82,9 +84,8 @@ namespace NetworKit{
 		 && (u != v)
 		 && (u_rank < glist_.GetRank(v))){
 		Edge cand_edge(u, v, true);
-		if(// (evaluated_edges_.find(cand_edge) ==  evaluated_edges_.end())
-		   // && 
-		   (added_edges_.find(cand_edge) ==  added_edges_.end())){
+		if((proposed_edges_.find(cand_edge) ==  proposed_edges_.end()) // not proposed
+		   && (added_edges_.find(cand_edge) ==  added_edges_.end())){
 		  // std::cerr << "return " << u << ", " << v <<std::endl;
 		  return cand_edge;
 		}
@@ -100,35 +101,47 @@ namespace NetworKit{
     bool Greedy::isValidEdge(const Edge& e){
       return (e.u != dummy_node)  || (e.v != dummy_node);
     }
+
+    bool Greedy::isIntercoreEdge(const Edge& e){
+      return e.v == dummy_node;
+    }    
+    
+    void Greedy::processIntercoreEdge(Edge& e){
+      do{
+	e.v = g_.randomNode();
+	      // (u, v) \not\in E and core(v) > core(u)
+      }
+      while(g_.hasEdge(e.u, e.v) || core_[e.v] <= core_[e.u]);
+    }
     
     Edge Greedy::bestEdge(){
+      proposed_edges_.clear();
+      
       std::vector<node> affected_nodes;
-      Edge best_e(dummy_node, dummy_node);
+      // Edge best_e(dummy_node, dummy_node);
       while(current_score_ < gain_max_){
-	std::cerr << current_score_ << " <= " << gain_max_ << std::endl;
+	std::cerr << "current score: " << current_score_ << " <= " << "gain_max_: " << gain_max_ << std::endl;
 
 	bool is_inter_core_edge = false;
 	try{
 	  // may throw exception
 	  Edge e = getCandidateEdge();
-	
+	  proposed_edges_.insert(e);
 	  // if inter-core edge
 	  // randomly sample a higher core node as neighbor
 	  // v is the dummy node
-	  if(e.v == dummy_node){
+	  if(isIntercoreEdge(e)){
 	    is_inter_core_edge = true;
-	    do{
-	      e.v = g_.randomNode();
-	      // (u, v) \not\in E and core(v) > core(u)
-	    }
-	    while(g_.hasEdge(e.u, e.v) || core_[e.v] <= core_[e.u]);
+	    processIntercoreEdge(e);
 	  }
     
 	  std::cerr << "trying (" << e.u << ", "<< e.v << ")" << std::endl;
 	  glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
 
 	  count score;
-	  if((evaluated_edges_.find(e) ==  evaluated_edges_.end())) {// not evaluated
+	  // the edge is not evaluated yet
+	  // compute the score and update the cache
+	  if((evaluated_edges_.find(e) ==  evaluated_edges_.end())) {
 	    // update cache
 	    for(node u: affected_nodes){
 	      n2e_dep_[u].insert(e);
@@ -152,16 +165,16 @@ namespace NetworKit{
 	
 	    std::cerr << std::endl;
 	  }
-	  else{ // evaluated
-	    if(is_inter_core_edge)
+	  else{ // it's evaluated
+	    if (is_inter_core_edge)
 	      score = edge_score_[Edge(e.u, dummy_node)];
 	    else 
 	      score = edge_score_[e];
 	  }
 	
-	  if(score > current_score_){
+	  if(score > current_score_) {
 	    current_score_ = score;
-	    best_e = e;
+	    best_edge_ = e;
 	    std::cerr << "best edge: (" << e.u << ", "<< e.v << ")" << std::endl; 
 	    std::cerr << "current score: " << current_score_ << std::endl;
 	  }
@@ -171,7 +184,7 @@ namespace NetworKit{
 	  break;
 	}
       }
-      return best_e;
+      return best_edge_;
     }
 
     void Greedy::maintain(const Edge& inserted_edge, const std::vector<node>& affected_nodes){
@@ -304,8 +317,10 @@ namespace NetworKit{
       // update current_score_
       current_score_ = 0;
       for(Edge e: evaluated_edges_){	
-	if(edge_score_[e] > current_score_)
+	if(edge_score_[e] > current_score_){
+	  best_edge_  = e;
 	  current_score_ = edge_score_[e];
+	}
       }
     }
     
@@ -317,6 +332,10 @@ namespace NetworKit{
       for(index i=0; i<k; i++){
 	Edge e = bestEdge();
 	std::cerr << "SELECTED EDGE: (" << e.u << ", " << e.v << ")" << std::endl;
+
+	if(isIntercoreEdge(e))
+	  processIntercoreEdge(e);
+	
 	edges.push_back(e);
 	added_edges_.insert(e);
 

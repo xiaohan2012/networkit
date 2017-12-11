@@ -19,6 +19,10 @@ namespace NetworKit{
       ~Greedy();      
 
       bool isValidEdge(const Edge& e);
+      bool isIntercoreEdge(const Edge& e);
+
+      void processIntercoreEdge(Edge& e);
+      
       Edge getCandidateEdge();
       Edge bestEdge();
       void maintain(const Edge& inserted_edge, const std::vector<node>& affected_nodes);
@@ -44,6 +48,7 @@ namespace NetworKit{
       std::unordered_map<Edge, count> edge_gain_;
       std::unordered_set<Edge> added_edges_;
       std::unordered_set<Edge> evaluated_edges_;
+      std::unordered_set<Edge> proposed_edges_;
       std::unordered_map<node, std::unordered_set<Edge>> n2e_dep_;
 
       // for inter core edge, store (u, dummy_node)
@@ -53,6 +58,8 @@ namespace NetworKit{
       count current_score_; //  \Delta^{*} f, the gain
       count core_max_; // maximum core value of all nodes
       count gain_max_; // maximum gain is bounded by the size of the largest CoreComponent
+
+      Edge best_edge_;
     };
   }
 }
