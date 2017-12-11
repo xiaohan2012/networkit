@@ -148,7 +148,8 @@ namespace NetworKit {
     }
     void GLIST::Insert(const node v1, const node v2,
 		       Graph& graph,
-		       std::vector<count>& core) {
+		       std::vector<count>& core,
+		       std::vector<node>& affected_nodes) {
       // insert the edge
       // graph[v1].push_back(v2);
       // graph[v2].push_back(v1);
@@ -262,6 +263,10 @@ namespace NetworKit {
 	auto tail = -1; // tail
 	for (auto v = src; n_ != v; v = node_[v].next) {
 	  ++core[v];
+
+	  // track which nodes are updated
+	  affected_nodes.push_back(v);
+	  
 	  node_[v].ext = 0;
 	  tail = v;
 	  // update mcd

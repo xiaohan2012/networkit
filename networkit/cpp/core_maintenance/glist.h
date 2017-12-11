@@ -24,7 +24,8 @@ namespace NetworKit{
 		       std::vector<count>& core);
       void Insert(const index v1, const index v2,
 		  Graph& graph,
-		  std::vector<count>& core);
+		  std::vector<count>& core,
+		  std::vector<node>& affected_nodes);
       void Remove(const index v1, const index v2,
 		  Graph& graph,
 		  std::vector<count>& core);
@@ -41,7 +42,7 @@ namespace NetworKit{
 			 std::vector<CoreComponent>& nc_list,
 			 std::vector<index>& nc_ids);
 
-      int FakeInsert(const node v1, const node v2,
+      void FakeInsert(const node v1, const node v2,
 		     Graph& graph,
 		     std::vector<count>& core,
 		     const std::vector<node>& nc_ids,

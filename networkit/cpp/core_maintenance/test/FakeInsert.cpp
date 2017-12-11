@@ -46,7 +46,7 @@ namespace NetworKit {
     for(index i=0; i<10; i++){
       std::vector<node> affected_nodes;
       // std::cerr << "round: " << i << std::endl;
-      index new_nc_id = glist_ptr->FakeInsert(0, 3, G, core, nc_ids, affected_nodes);
+      glist_ptr->FakeInsert(0, 3, G, core, nc_ids, affected_nodes);
       // std::cerr << "done" << std::endl;
  // ASSERT_EQ(new_nc_id, 1);
       ASSERT_THAT(affected_nodes, testing::ElementsAre(0, 1, 2, 3));

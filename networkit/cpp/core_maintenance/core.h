@@ -16,7 +16,8 @@ namespace NetworKit {
 			       std::vector<node>& core) = 0;
       virtual void Insert(const node v1, const node v2,
 			  Graph& graph,
-			  std::vector<count>& core) = 0;
+			  std::vector<count>& core,
+			  std::vector<node>& affected_nodes) = 0;
       virtual void Remove(const node v1, const node v2,
 			  Graph& graph,
 			  std::vector<count>& core) = 0;

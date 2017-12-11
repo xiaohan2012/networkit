@@ -13,9 +13,10 @@ namespace NetworKit{
       // glist_.PrintNCList(nc_list_);
 
       // gain_max_
+      // clique shouldn't be counted here
       for(auto nc: nc_list_){
 	if(nc.nodes.size() > gain_max_){
-	  gain_max_ = nc.nodes.size();
+	  gain_max_ = nc.nodes.size(); 
 	}
       }
 	
@@ -38,7 +39,8 @@ namespace NetworKit{
 
       for(index i=0; i<nc_list_.size(); i++){
 	core::GLIST::CoreComponent& nc=nc_list_[i];
-	bucket_2_[nc.nodes.size()].insert(i);
+	if(nc.nodes.size() > 1)
+	  bucket_2_[nc.nodes.size()].insert(i);
       }
     }
     
@@ -56,14 +58,15 @@ namespace NetworKit{
 	for(node u: B){
 	  // std::cerr << "u=" << u << std::endl;
 	  Edge cand_edge(u, dummy_node, true);
-	  if(((g_.degree(u) < n_ - 1) && core_[u] < core_max_)
-	     && (evaluated_edges_.find(cand_edge) ==  evaluated_edges_.end()) // not evaluated
+	  if(((g_.degree(u) < n_ - 1) && core_[u] < core_max_) // 2nd condition, needs to link to higher core
+	     // && (evaluated_edges_.find(cand_edge) ==  evaluated_edges_.end()) // not evaluated
 	     && (added_edges_.find(cand_edge) ==  added_edges_.end()) // not added
 	     ){
 	    return cand_edge;
 	  }
 	}
       }
+      
       for(index i=current_score_+1; i < bucket_2_.size(); i++) {
 	std::unordered_set<index> nc_ids = bucket_2_[i];
 	for(index j: nc_ids){
@@ -79,8 +82,9 @@ namespace NetworKit{
 		 && (u != v)
 		 && (u_rank < glist_.GetRank(v))){
 		Edge cand_edge(u, v, true);
-		if((evaluated_edges_.find(cand_edge) ==  evaluated_edges_.end())
-		   && (added_edges_.find(cand_edge) ==  added_edges_.end())){
+		if(// (evaluated_edges_.find(cand_edge) ==  evaluated_edges_.end())
+		   // && 
+		   (added_edges_.find(cand_edge) ==  added_edges_.end())){
 		  // std::cerr << "return " << u << ", " << v <<std::endl;
 		  return cand_edge;
 		}
@@ -123,28 +127,37 @@ namespace NetworKit{
 	  std::cerr << "trying (" << e.u << ", "<< e.v << ")" << std::endl;
 	  glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
 
-	  // update cache
-	  for(node u: affected_nodes){
-	    n2e_dep_[u].insert(e);
-	  }
+	  count score;
+	  if((evaluated_edges_.find(e) ==  evaluated_edges_.end())) {// not evaluated
+	    // update cache
+	    for(node u: affected_nodes){
+	      n2e_dep_[u].insert(e);
+	    }
 
-	  count score = affected_nodes.size();
-	  // cache the edge score
-	  if(is_inter_core_edge){
-	    Edge real_edge = Edge(e.u, dummy_node);
-	    edge_score_[real_edge] = score;
-	    evaluated_edges_.insert(real_edge);
-	  }
-	  else {
-	    edge_score_[e] = score;
-	    evaluated_edges_.insert(e);
-	  }
+	    score = affected_nodes.size();
+	    // cache the edge score
+	    if(is_inter_core_edge){
+	      Edge real_edge(e.u, dummy_node);
+	      edge_score_[real_edge] = score;
+	      evaluated_edges_.insert(real_edge);
+	    }
+	    else {
+	      edge_score_[e] = score;
+	      evaluated_edges_.insert(e);
+	    }
 	  
-	  std::cerr << "affected nodes" << std::endl;
-	  std::copy(affected_nodes.begin(), affected_nodes.end(), std::ostream_iterator<node>(std::cerr, " "));
-	  affected_nodes.clear(); // don't forget the empty it
+	    std::cerr << "affected nodes" << std::endl;
+	    std::copy(affected_nodes.begin(), affected_nodes.end(), std::ostream_iterator<node>(std::cerr, " "));
+	    affected_nodes.clear(); // don't forget the empty it
 	
-	  std::cerr << std::endl;
+	    std::cerr << std::endl;
+	  }
+	  else{ // evaluated
+	    if(is_inter_core_edge)
+	      score = edge_score_[Edge(e.u, dummy_node)];
+	    else 
+	      score = edge_score_[e];
+	  }
 	
 	  if(score > current_score_){
 	    current_score_ = score;
@@ -161,42 +174,127 @@ namespace NetworKit{
       return best_e;
     }
 
-    void Greedy::maintain(const Edge& e){
-      std::cerr << "core number" << std::endl;
-      std::copy(core_.begin(), core_.end(), std::ostream_iterator<node>(std::cerr, " "));
-
-      // update nc_list_ and nc_ids_
-      std::cerr << "cored guided BFS" << std::endl;
-      glist_.CoreGuidedBFS(g_, core_, nc_list_, nc_ids_);
-	
-      // adding e will change the incremental data structures
-      std::vector<node> affected_nodes;
-      std::cerr << "Fake Insert" << std::endl;
-      glist_.FakeInsert(e.u, e.v, g_, core_, nc_ids_, affected_nodes);
-      // std::cerr << "new_nc_id=" << new_nc_id << std::endl;
-      // core::GLIST::CoreComponent& old_nc = nc_list_[nc_ids_[affected_nodes[0]]];
-      // core::GLIST::CoreComponent& new_nc = nc_list_[new_nc_id];
-            
+    void Greedy::maintain(const Edge& inserted_edge, const std::vector<node>& affected_nodes){
+      core_max_ = *std::max_element(core_.begin(), core_.end());
       
-      for(node w: affected_nodes){
-	// change core
-	// change
-      	// new_nc.nodes.insert(w);
-	// if(core_[w] == node_rem(w)){ // core_ and rem_ should be updated
-	//   new_nc.usable.insert(w);
-	// }
-	// nc_ids_[w] = new_nc_id;
+      std::cerr << "core number" << std::endl;
+      std::copy(core_.begin(), core_.end(),
+		std::ostream_iterator<node>(std::cerr, " "));
+      std::cerr << std::endl;
 
-	// old_nc.nodes.erase(w);
-	// old_nc.usable.erase(w); // check?
+      std::cerr << "affected nodes:" << std::endl;
+      std::copy(affected_nodes.begin(), affected_nodes.end(),
+		std::ostream_iterator<node>(std::cerr, " "));
+      std::cerr << std::endl;
 	
-	for(Edge affected_e: n2e_dep_[w]){
+      node n = affected_nodes.front();
+      index nc_id_prev = nc_ids_[n];
+      std::cerr << "prev nv id: " << nc_id_prev << std::endl;
+      core::GLIST::CoreComponent& nc_prev = nc_list_[nc_id_prev];
+      int size_prev = nc_prev.nodes.size();
+
+      std::cerr << "bucket erase" << std::endl;
+      std::cerr << "nc_prev.usable.size() = " << nc_prev.usable.size() << std::endl;
+
+      // std::cerr << "before:" << std::endl;      
+      // std::copy(bucket_1_[size_prev].begin(),
+      // 		bucket_1_[size_prev].end(),
+      // 		std::ostream_iterator<node>(std::cerr, " "));      
+      
+      for(auto n: nc_prev.usable)
+	bucket_1_[size_prev].erase(n);
+
+      // std::cerr << "after::" << std::endl;            
+      // std::copy(bucket_1_[size_prev].begin(),
+      // 		bucket_1_[size_prev].end(),
+      // 		std::ostream_iterator<node>(std::cerr, " "));
+      bucket_2_[size_prev].erase(nc_id_prev);
+
+      std::cerr << "getting affected nc ids..." << std::endl;
+      std::unordered_set<index> affected_nc_ids;
+      for(node x: affected_nodes) {
+	for(node y: g_.neighbors(x)){
+	  if((core_[x] == core_[y]) && (nc_ids_[y] != nc_id_prev))
+	    affected_nc_ids.insert(nc_ids_[y]);
+	}
+      }
+      std::cerr << "affected nc ids:" << std::endl;
+      std::copy(affected_nc_ids.begin(), affected_nc_ids.end(),
+		std::ostream_iterator<node>(std::cerr, " "));
+      std::cerr << std::endl;      
+
+      // remove the nodes and nc ids from bucket_1_ and bucket_2_
+      std::cerr << "remove the nodes and nc ids from bucket_1_ and bucket_2_" << std::endl;      
+      for(int nc_id: affected_nc_ids){
+	core::GLIST::CoreComponent& nc = nc_list_[nc_id];
+	int size = nc.nodes.size();
+	for(auto n: nc.usable) bucket_1_[size].erase(n);
+	// bucket_1_[size].erase(nc.usable.begin(), nc.usable.end());
+	bucket_2_[size].erase(nc_id);
+      }
+      std::cerr << "finding the anchor nc id_" << std::endl;      
+      int anchor_nc_id = 0;
+      if(affected_nc_ids.size() > 0){
+	anchor_nc_id = (* affected_nc_ids.begin());
+      }
+      else{
+	// search until found an empty slot to save nc_id
+	while(nc_list_[anchor_nc_id].nodes.size() != 0)
+	  anchor_nc_id++;
+      }
+      std::cerr << "anchor nc id: " << anchor_nc_id << std::endl;
+
+      // remove anchor_nc_id from affected_nc_ids
+      std::cerr << "adding nodes to anchor nc" << std::endl;
+      core::GLIST::CoreComponent& anchor_nc = nc_list_[anchor_nc_id];
+      for(int nc_id: affected_nc_ids){
+	core::GLIST::CoreComponent& this_nc = nc_list_[nc_id];
+	anchor_nc.nodes.insert(this_nc.nodes.begin(), this_nc.nodes.end());
+	anchor_nc.usable.insert(this_nc.usable.begin(), this_nc.usable.end());
+	for(node x: this_nc.nodes)
+	  nc_ids_[x] = anchor_nc_id;
+	this_nc.nodes.clear();
+	this_nc.usable.clear();
+      }
+
+      std::cerr << "removing affeced nodes from nc_prev" << std::endl;
+      std::unordered_set<node> affected_node_set(affected_nodes.begin(), affected_nodes.end());
+      for(auto n: affected_node_set) nc_prev.nodes.erase(n);
+      for(auto n: affected_node_set) nc_prev.usable.erase(n);
+
+
+      anchor_nc.nodes.insert(affected_node_set.begin(), affected_node_set.end());
+      for(node z: affected_nodes){
+	nc_ids_[z] = anchor_nc_id;
+	if(core_[z] == node_rem(z))
+	  anchor_nc.usable.insert(z);
+	
+	for(Edge affected_e: n2e_dep_[z]){
 	  edge_score_.erase(affected_e);
 	  evaluated_edges_.erase(affected_e);	  
 	}
+	n2e_dep_[z].erase(inserted_edge);
       }
 
+      // add nodes in anchor_nc to bucket_1_ and bucket_2_
+      // should skip nodes in max core (which happens to be clique)
+      for(node n: anchor_nc.usable)
+	if(core_[n] < core_max_) // only nodes in lower core 
+	  bucket_1_[anchor_nc.nodes.size()].insert(n);
 
+      bucket_2_[anchor_nc.nodes.size()].insert(anchor_nc_id);
+      
+      
+      // udpate the remaining of nc_prev
+      size_prev = nc_prev.nodes.size();
+      if(nc_prev.usable.size() > 0){
+	bucket_1_[size_prev].insert(nc_prev.usable.begin(), nc_prev.usable.end());
+	if(nc_prev.nodes.size()>1)
+	  bucket_2_[size_prev].insert(nc_id_prev);
+
+      }
+
+      gain_max_ = 0;
       for(auto nc: nc_list_){
 	if(nc.nodes.size() > gain_max_){
 	  gain_max_ = nc.nodes.size();
@@ -208,27 +306,34 @@ namespace NetworKit{
       for(Edge e: evaluated_edges_){	
 	if(edge_score_[e] > current_score_)
 	  current_score_ = edge_score_[e];
-      }      
+      }
     }
     
     std::vector<Edge> Greedy::doGreedy(count k){
       // select k edges greedily
       added_edges_.clear();
       std::vector<Edge> edges;
+      std::vector<node> affected_nodes;
       for(index i=0; i<k; i++){
 	Edge e = bestEdge();
+	std::cerr << "SELECTED EDGE: (" << e.u << ", " << e.v << ")" << std::endl;
 	edges.push_back(e);
 	added_edges_.insert(e);
 
 	// insert the edge and update core_
-	glist_.Insert(e.u, e.v, g_, core_);
+	glist_.Insert(e.u, e.v, g_, core_, affected_nodes);
 
-	
-	// update core_max_
-	core_max_ = *std::max_element(core_.begin(), core_.end());
+	std::cerr << "core number" << std::endl;
+	std::copy(core_.begin(), core_.end(),
+		  std::ostream_iterator<node>(std::cerr, " "));
+	std::cerr << "affected nodes:" << std::endl;
+	std::copy(affected_nodes.begin(), affected_nodes.end(),
+		  std::ostream_iterator<node>(std::cerr, " "));		
 
 	// maintain the incremental data structures
-	maintain(e);
+	maintain(e, affected_nodes);
+
+	affected_nodes.clear();
       }
       return edges;
     }

@@ -44,11 +44,11 @@ namespace NetworKit {
     //   garbage_  =     cp_garbage_; 
     // }
     
-    int GLIST::FakeInsert(const node v1, const node v2,
-			  Graph& graph,
-			  std::vector<count>& core,
-			  const std::vector<node>& nc_ids,
-			  std::vector<node>& affected_nodes) {
+    void GLIST::FakeInsert(const node v1, const node v2,
+			   Graph& graph,
+			   std::vector<count>& core,
+			   const std::vector<node>& nc_ids,
+			   std::vector<node>& affected_nodes) {
       /*
 	updates the set of affected nodes 
 	and return the new nc id
@@ -82,7 +82,7 @@ namespace NetworKit {
       ++node_[src].rem;
       // there is no need to update the core numbers
       if (node_[src].rem <= K) {
-	return -1;
+	return;
       }
       // preparing the heap
       heap_.Insert(GetRank(src), src);
@@ -210,7 +210,7 @@ namespace NetworKit {
       // core = cp_core;  // copy back
       Remove(v1, v2,
 	     graph, core);
-      return nc_ids[target];      
+      // return nc_ids[target];      
     }
 
     void GLIST::CoreGuidedBFS(const Graph& graph,

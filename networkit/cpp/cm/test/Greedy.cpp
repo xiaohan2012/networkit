@@ -33,8 +33,11 @@ namespace NetworKit {
     ASSERT_THAT(greedy.nc_list_[1].usable,
     		testing::ContainerEq(std::unordered_set<index>({5})));
 
-    ASSERT_THAT(greedy.bucket_2_[1],
-    		testing::ContainerEq(std::unordered_set<index>({1})));
+    ASSERT_EQ(greedy.bucket_2_[0].size(), 0);
+    ASSERT_EQ(greedy.bucket_2_[1].size(), 0);
+    for(int i=0; i<5; i++)
+      ASSERT_EQ(greedy.bucket_2_[i].size(), 0);
+    // testing::ContainerEq(std::unordered_set<index>({})));
     ASSERT_THAT(greedy.bucket_2_[5],
     		testing::ContainerEq(std::unordered_set<index>({0})));
 
@@ -95,28 +98,35 @@ namespace NetworKit {
   TEST_F(GreedyTest, testMaintain){
     // setup
     CoreMaximization::Greedy greedy(G, G.numberOfNodes());
-    Edge e (0, 3);    
-    greedy.glist_.Insert(e.u, e.v, greedy.g_, greedy.core_);
+
+    Edge e (0, 3);
+    std::vector<node> affected_nodes;
+
+    std::cerr << "glist.insert" << std::endl;
+    greedy.glist_.Insert(e.u, e.v, greedy.g_, greedy.core_, affected_nodes);
 
     // real stuff
-    greedy.maintain(e);
+    // std::cerr << "before maintain" << std::endl;
+    // greedy.glist_.PrintNCList(greedy.nc_list_);
+    greedy.maintain(e, affected_nodes);
 
     // nc_list_
     // nodes
     // usable
-    greedy.glist_.PrintNCList(greedy.nc_list_);
+    // std::cerr << "after maintain" << std::endl;    
+    // greedy.glist_.PrintNCList(greedy.nc_list_);
     
-    ASSERT_THAT(greedy.nc_list_[0].nodes,
-    		testing::ContainerEq(std::unordered_set<index>({0, 1, 2, 3})));
-    ASSERT_THAT(greedy.nc_list_[0].usable,
-    		testing::ContainerEq(std::unordered_set<index>({0})));
-    ASSERT_THAT(greedy.nc_list_[1].nodes,
-    		testing::ContainerEq(std::unordered_set<index>({4})));
-    ASSERT_THAT(greedy.nc_list_[1].usable,
-    		testing::ContainerEq(std::unordered_set<index>({4})));
     ASSERT_THAT(greedy.nc_list_[2].nodes,
-    		testing::ContainerEq(std::unordered_set<index>({5})));
+    		testing::ContainerEq(std::unordered_set<index>({0, 1, 2, 3})));
     ASSERT_THAT(greedy.nc_list_[2].usable,
+    		testing::ContainerEq(std::unordered_set<index>({0})));
+    ASSERT_THAT(greedy.nc_list_[0].nodes,
+    		testing::ContainerEq(std::unordered_set<index>({4})));
+    ASSERT_THAT(greedy.nc_list_[0].usable,
+    		testing::ContainerEq(std::unordered_set<index>({4})));
+    ASSERT_THAT(greedy.nc_list_[1].nodes,
+    		testing::ContainerEq(std::unordered_set<index>({5})));
+    ASSERT_THAT(greedy.nc_list_[1].usable,
     		testing::ContainerEq(std::unordered_set<index>({5})));
 
     // nc_ids_
@@ -126,28 +136,78 @@ namespace NetworKit {
     // bucket_1_
     ASSERT_THAT(greedy.bucket_1_[1],
     		testing::ContainerEq(std::unordered_set<index>({4, 5})));
-    for(index i=2; i<7; i++) {
-      ASSERT_EQ(greedy.bucket_1_[i].size(), 0);  
-    }    
 
+    // note that {0, 1, 2, 3} should not have any candidate inter-core edges
+    // beucase it's the highest core
+    for(index i=2; i<7; i++) 
+      ASSERT_EQ(greedy.bucket_1_[i].size(), 0);
     
     // bucket_2_
-    ASSERT_THAT(greedy.bucket_2_[1],
-    		testing::ContainerEq(std::unordered_set<index>({1})));
-    for(index i=2; i<7; i++) {
-      ASSERT_EQ(greedy.bucket_2_[i].size(), 0);  
-    }
+    // there are no intra-nc edges available
+    for(index i=0; i<7; i++)
+      if(i != 4)
+	ASSERT_EQ(greedy.bucket_2_[i].size(), 0);
 
+    // Strictly speaking, it should equal {} because nc 2 is a clique   
+    ASSERT_THAT(greedy.bucket_2_[4],
+		testing::ContainerEq(std::unordered_set<index>({2})));    
+
+    ASSERT_EQ(greedy.current_score_, 0); // because no other edges are evaluated
+    ASSERT_EQ(greedy.core_max_, 3);
+    ASSERT_EQ(greedy.gain_max_, 4); // Strictly speaking, it should equal 1 because the largest nc is a clique
+  }
+
+  TEST_F(GreedyTest, testDoGreedySingleEdge){
+    CoreMaximization::Greedy greedy(G, G.numberOfNodes());
+    std::vector<Edge> edges = greedy.doGreedy(1);
+
+    ASSERT_EQ(edges[0], Edge(0, 4));
+    ASSERT_THAT(greedy.core_, testing::ElementsAre(3, 3, 3, 3, 3, 1));
+
+    ASSERT_EQ(greedy.bucket_1_[0].size(), 0);
+    ASSERT_THAT(greedy.nc_list_[1].nodes,
+		testing::ContainerEq(std::unordered_set<index>({5})));
+    ASSERT_THAT(greedy.nc_list_[2].nodes,
+		testing::ContainerEq(std::unordered_set<index>({0, 1, 2, 3, 4})));
+    ASSERT_THAT(greedy.nc_list_[2].usable,
+		testing::ContainerEq(std::unordered_set<index>({0})));
+    
+    for(auto i: std::vector<int>({0, 2, 3, 4, 6}))
+      ASSERT_EQ(greedy.bucket_1_[i].size(), 0);
+
+    ASSERT_THAT(greedy.bucket_1_[1],
+    		testing::ContainerEq(std::unordered_set<index>({5})));
+    // ASSERT_THAT(greedy.bucket_1_[5],
+    // 		testing::ContainerEq(std::unordered_set<index>({0}))); // one of {0, 1, 3}
+
+    for(int i=0; i<7; i++)
+      if(i != 1)
+	ASSERT_EQ(greedy.bucket_1_[i].size(), 0);
+    
+    ASSERT_THAT(greedy.bucket_2_[5],
+    		testing::ContainerEq(std::unordered_set<index>({2})));  // nc 0 moved to nc 2
+    
+
+    // check incremental data structures
+    // BREAKPOINT
+    // (0, 3) should be removed now
+    ASSERT_THAT(greedy.evaluated_edges_,
+    		testing::ContainerEq(std::unordered_set<Edge>({Edge(5, 6)})));
+
+    // added (0, 4) is not in the dependency list
+    for(node n=0; n<5; n++)
+      ASSERT_TRUE(greedy.n2e_dep_[n].find(Edge(0, 4)) == greedy.n2e_dep_[n].end());
 
     ASSERT_EQ(greedy.current_score_, 1);
-    ASSERT_EQ(greedy.core_max_, 3);
-    ASSERT_EQ(greedy.gain_max_, 4);
+    ASSERT_EQ(greedy.gain_max_, 5);
   }
-  TEST_F(GreedyTest, testDoGreedy){
-    // CoreMaximization::Greedy greedy(G, G.numberOfNodes());
-    // std::vector<Edge> edges = greedy.doGreedy(2);
-    // ASSERT_EQ(edges[0], Edge(1, 4));
-    // ASSERT_EQ(edges[1].u, 0);
-  }  
+
+  TEST_F(GreedyTest, testDoGreedyTwoEdges){
+    CoreMaximization::Greedy greedy(G, G.numberOfNodes());
+    std::vector<Edge> edges = greedy.doGreedy(2);
+    ASSERT_THAT(edges,
+		testing::ElementsAre(Edge(0, 4), Edge(5, 1)));
+
+  }
 }
 
