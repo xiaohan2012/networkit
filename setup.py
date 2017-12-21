@@ -293,12 +293,13 @@ else:
 
 # initialize Extension module with the appropriate source file
 modules = [Extension("_NetworKit",
-	src,
-	language = "c++",
-	extra_compile_args=["-fopenmp", "-std={}".format(stdflag), "-O3", "-DNOGTEST"],
-	extra_link_args=["-fopenmp", "-std={}".format(stdflag)],
-	libraries=["NetworKit-Core-{0}".format(optimize)],
-	library_dirs=["./"])]
+	             src,
+	             language = "c++",
+	             extra_compile_args=["-fopenmp", "-std={}".format(stdflag), "-O3", "-DNOGTEST"],
+	             extra_link_args=["-fopenmp", "-std={}".format(stdflag)],
+	             libraries=["NetworKit-Core-{0}".format(optimize)],
+	             library_dirs=["./"])
+]
 
 if do_cythonize:
 	for e in modules:

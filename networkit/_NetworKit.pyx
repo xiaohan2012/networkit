@@ -1266,7 +1266,7 @@ cdef class SSSP(Algorithm):
 
 	def getStack(self, moveOut=True):
 		""" DEPRECATED: Use getNodesSortedByDistance instead.
-		
+
 		Returns a vector of nodes ordered in increasing distance from the source.
 
 		For this functionality to be available, storeNodesSortedByDistance has to be set to true in the constructor.
@@ -9907,3 +9907,57 @@ cdef class PivotMDS (GraphLayoutAlgorithm):
 		"""Constructs a PivotMDS object for the given @a graph. The algorithm should embed the graph in @a dim dimensions using @a numberOfPivots pivots."""
 		(<_PivotMDS*>(self._this)).run()
 		return self
+
+
+cdef extern from "cpp/core_maintenance/glist.h":
+	cdef cppclass _GLIST "NetworKit::core::GLIST":
+		void _GLIST(count) except +
+		void ComputeCore(_Graph, bool, vector[count]) except +
+		void Insert(index, index, _Graph, vector[count] core, vector[node] affected_nodes) except +
+		void Remove(index, index, _Graph, vector[count]) except +
+
+		# void CoreGuidedBFS(_Graph, vector[count] core, vector[CoreComponent] nc_list, vector[index] nc_ids) except +
+
+		void FakeInsert(node, node, _Graph, vector[count], vector[index] nc_ids, vector[node] affected_nodes) except +
+
+
+cdef class Glist:
+	cdef _GLIST *_this
+	cdef Graph _G
+	cdef vector[count] *_core
+	cdef vector[node] *_affected_nodes
+	cdef vector[index] *_nc_ids
+
+	def __cinit__(self, Graph G):
+		self._G = G
+		cdef num_nodes = self.G.numberOfNodes()
+		self._this = new _GLIST(num_nodes)
+
+		self._core = new vector[count](num_nodes, 0)
+		self._nc_ids = new vector[index](num_nodes, 0)  # TODO, initialize it
+
+	def __dealloc__(self):
+		del self._this
+
+	def compute_core(self, bool indexing=False):
+		self._this.ComputeCore(self._G._this,  # refer to the C++ object
+                                       indexing,
+                                       self._core[0])  # deref
+		return self._core[0]  # deref
+
+	def insert_edge(self, index u, index v):
+		self._affected_nodes[0].clear()
+		self._this.Insert(u, v, self._G._this, self._core[0], self._affected_nodes[0])
+		return self._affected_nodes[0]
+
+	def remove_edge(self, index u, index v):
+		self._this.Remove(u, v, self._G._this, self._core[0])
+
+	def fake_insert(self, index u, index v):
+		self._affected_nodes[0].clear()
+		self._this.FakeInsert(u, v, self._G._this, self._core[0],
+				      self._nc_ids[0], self._affected_nodes[0])
+		return self._affected_nodes[0]
+
+	def run(self):
+		pass
