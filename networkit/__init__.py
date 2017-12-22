@@ -89,6 +89,7 @@ except ImportError as importError:
 
 # extension imports
 from _NetworKit import getLogLevel, setLogLevel, setPrintLocation, enableNestedParallelism, setNumberOfThreads, getCurrentNumberOfThreads, getMaxNumberOfThreads, none, setSeed
+from _NetworKit import Glist  # MY STUFF
 
 # local imports into the top namespace
 from .graph import Graph
