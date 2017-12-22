@@ -33,10 +33,14 @@ namespace NetworKit{
 		 const std::vector<count>& core) const;
 
       struct CoreComponent {
-	std::unordered_set<index> nodes;
-	std::unordered_set<index> usable;
+		std::unordered_set<index> nodes;
+		std::unordered_set<index> usable;
+		CoreComponent()
+		{
+
+		}
       };
-      
+
       void CoreGuidedBFS(const Graph& graph,
 			 const std::vector<count>& core,
 			 std::vector<CoreComponent>& nc_list,
@@ -50,7 +54,7 @@ namespace NetworKit{
 
       void Checkpoint();
       void Rollback();
-      
+
       void PrintNCList(const std::vector<CoreComponent>& nc_list);
       /*
 	for testing purpose only
@@ -62,7 +66,7 @@ namespace NetworKit{
 	index prev;
 	index next;
       };
-      
+
       std::vector<ListNode> get_nodes(){
 	return this->node_;
       }
@@ -75,7 +79,7 @@ namespace NetworKit{
 	return rank_[v];
       }
 
-            
+
     private:
       /* struct ListNode { */
       /* 	count rem; */
@@ -120,7 +124,7 @@ namespace NetworKit{
       // std::vector<bool> cp_visited_;
       // gadget::Treap cp_tree_;
       // gadget::MinHeap cp_heap_;
-      // std::vector<int> cp_garbage_;      
+      // std::vector<int> cp_garbage_;
     };
   }  // namespace core
 }

@@ -9907,18 +9907,36 @@ cdef class PivotMDS (GraphLayoutAlgorithm):
 		"""Constructs a PivotMDS object for the given @a graph. The algorithm should embed the graph in @a dim dimensions using @a numberOfPivots pivots."""
 		(<_PivotMDS*>(self._this)).run()
 		return self
-
-
 cdef extern from "cpp/core_maintenance/glist.h":
+	# declare it
+	cdef struct _SubCore "NetworKit::core::GLIST::CoreComponent":
+		pass
+
 	cdef cppclass _GLIST "NetworKit::core::GLIST":
 		void _GLIST(count) except +
 		void ComputeCore(_Graph, bool, vector[count]) except +
 		void Insert(index, index, _Graph, vector[count] core, vector[node] affected_nodes) except +
 		void Remove(index, index, _Graph, vector[count]) except +
 
-		# void CoreGuidedBFS(_Graph, vector[count] core, vector[CoreComponent] nc_list, vector[index] nc_ids) except +
+		void CoreGuidedBFS(_Graph, vector[count] core, vector[_SubCore] nc_list, vector[index] nc_ids) except +
 
 		void FakeInsert(node, node, _Graph, vector[count], vector[index] nc_ids, vector[node] affected_nodes) except +
+
+
+# cdef class SubCore:
+# 	cdef _SubCore _this
+# 	def __cinit__(self, vector[node] nodes=[]):
+# 		cdef n
+# 		for n in nodes:
+# 			self._this.nodes.insert(n)
+
+# 	def nodes(self):
+# 		return self._this.nodes
+
+	# def add_nodes(self, vector[node] nodes):
+	# 	cdef n
+	# 	for n in nodes:
+	# 		_this.nodes.insert(n)
 
 
 cdef class Glist:
@@ -9926,18 +9944,40 @@ cdef class Glist:
 	cdef Graph _G
 	cdef vector[count] *_core
 	cdef vector[node] *_affected_nodes
-	cdef vector[index] *_nc_ids
+	cdef vector[index] *_sc_id
+	cdef vector[_SubCore] *_sc_list
 
 	def __cinit__(self, Graph G):
 		self._G = G
-		cdef num_nodes = self.G.numberOfNodes()
+		cdef num_nodes = <count> self._G.numberOfNodes()
 		self._this = new _GLIST(num_nodes)
 
 		self._core = new vector[count](num_nodes, 0)
-		self._nc_ids = new vector[index](num_nodes, 0)  # TODO, initialize it
+		self._sc_id = new vector[index](num_nodes, 0)  # TODO, initialize i
+		self._affected_nodes = new vector[node]()  # empty initially
+		self._sc_list = new vector[_SubCore](<int> num_nodes)  # <int> is important, otherwise, no suitable method error
+
+		# init
+		self.compute_core(indexing=True)
+
+	@property
+	def core(self):
+		return self._core[0]
+
+	@property
+	def sc_id(self):
+		return self._sc_id[0]
 
 	def __dealloc__(self):
 		del self._this
+		del self._core
+		del self._sc_id
+		del self._sc_list
+
+	def core_bfs(self):
+		self._this.CoreGuidedBFS(self._G._this, self._core[0],
+                                         self._sc_list[0], self._sc_id[0])
+
 
 	def compute_core(self, bool indexing=False):
 		self._this.ComputeCore(self._G._this,  # refer to the C++ object
@@ -9956,7 +9996,7 @@ cdef class Glist:
 	def fake_insert(self, index u, index v):
 		self._affected_nodes[0].clear()
 		self._this.FakeInsert(u, v, self._G._this, self._core[0],
-				      self._nc_ids[0], self._affected_nodes[0])
+				      self._sc_id[0], self._affected_nodes[0])
 		return self._affected_nodes[0]
 
 	def run(self):
