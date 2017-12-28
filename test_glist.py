@@ -1,5 +1,5 @@
 import pytest
-from _NetworKit import Glist, Graph
+from networkit import Glist, Graph
 
 
 @pytest.fixture
