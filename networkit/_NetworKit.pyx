@@ -7,7 +7,7 @@ import collections
 import math
 import os
 import tempfile
-
+from collections import Counter
 
 try:
 	import pandas
@@ -9990,14 +9990,39 @@ cdef class Glist:
 		self._this.Insert(u, v, self._G._this, self._core[0], self._affected_nodes[0])
 		return self._affected_nodes[0]
 
+	def insert_edges(self, edges):
+		cdef unordered_map[node, int] freq
+		cdef node u, v
+		for (u, v) in edges:
+			aff_nodes = self.insert_edge(u, v)
+			for n in aff_nodes:
+				if freq.count(n) == 0:
+					freq[n] = 0
+				freq[n] += 1
+		return freq
+
+
 	def remove_edge(self, index u, index v):
 		self._this.Remove(u, v, self._G._this, self._core[0])
+
+
+	def remove_edges(self, edges):
+		cdef node u, v
+		for u, v in edges:
+			self.remove_edge(u, v)
+
 
 	def fake_insert(self, index u, index v):
 		self._affected_nodes[0].clear()
 		self._this.FakeInsert(u, v, self._G._this, self._core[0],
 				      self._sc_id[0], self._affected_nodes[0])
 		return self._affected_nodes[0]
+
+
+	def fake_insert_edges(self, edges):
+		freq = self.insert_edges(edges)
+		self.remove_edges(edges)
+		return freq
 
 	def run(self):
 		pass
