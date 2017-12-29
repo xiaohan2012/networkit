@@ -1,5 +1,6 @@
 import pytest
-from _NetworKit import Glist, Graph
+# from _NetworKit import Glist, Graph
+from networkit import Glist, Graph
 
 
 @pytest.fixture
@@ -43,6 +44,7 @@ def test_remove_edge(g, glist):
 
 
 def test_fake_insert(g, glist):
+    n_edges_prev = g.numberOfEdges()
     nodes = glist.fake_insert(0, 4)
     assert set(nodes) == {0, 1, 2, 3, 4}
 
@@ -52,6 +54,7 @@ def test_fake_insert(g, glist):
     # cores unchanged
     assert glist.compute_core() == [2, 2, 2, 2, 2, 1]
     assert glist.compute_core() == glist.core
+    assert g.numberOfEdges() == n_edges_prev
 
 
 def test_core_bfs(g, glist):
@@ -83,7 +86,9 @@ def test_remove_edges(g, glist):
 
 
 def test_fake_insert_edges(g, glist):
+    n_edges_prev = g.numberOfEdges()
     edges = [(0, 4), (1, 5)]
     nodes_count = glist.fake_insert_edges(edges)
     assert nodes_count == {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1}
     assert glist.core == [2]*5 + [1]
+    assert g.numberOfEdges() == n_edges_prev

@@ -9920,7 +9920,6 @@ cdef extern from "cpp/core_maintenance/glist.h":
 
 		void CoreGuidedBFS(_Graph, vector[count] core, vector[_SubCore] nc_list, vector[index] nc_ids) except +
 
-		void FakeInsert(node, node, _Graph, vector[count], vector[index] nc_ids, vector[node] affected_nodes) except +
 
 
 # cdef class SubCore:
@@ -9948,7 +9947,7 @@ cdef class Glist:
 	cdef vector[_SubCore] *_sc_list
 
 	def __cinit__(self, Graph G):
-		self._G = G
+		self._G = G  # by reference
 		cdef num_nodes = <count> self._G.numberOfNodes()
 		self._this = new _GLIST(num_nodes)
 
@@ -9959,6 +9958,10 @@ cdef class Glist:
 
 		# init
 		self.compute_core(indexing=True)
+
+	@property
+	def g(self):
+		return self._G
 
 	@property
 	def core(self):
@@ -10003,6 +10006,7 @@ cdef class Glist:
 
 
 	def remove_edge(self, index u, index v):
+		# print('removing ({}, {}) called from Python'.format(u, v))
 		self._this.Remove(u, v, self._G._this, self._core[0])
 
 
@@ -10013,10 +10017,9 @@ cdef class Glist:
 
 
 	def fake_insert(self, index u, index v):
-		self._affected_nodes[0].clear()
-		self._this.FakeInsert(u, v, self._G._this, self._core[0],
-				      self._sc_id[0], self._affected_nodes[0])
-		return self._affected_nodes[0]
+		affected_nodes = self.insert_edge(u, v)
+		self.remove_edge(u, v)
+		return affected_nodes
 
 
 	def fake_insert_edges(self, edges):

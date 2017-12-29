@@ -320,11 +320,12 @@ namespace NetworKit {
 
     }
     void GLIST::Remove(const node v1, const node v2,
-		       Graph& graph,
+					   Graph& graph,
 					   std::vector<count>& core) {
       // remove the edge
       // graph[v1].erase(std::find(graph[v1].begin(), graph[v1].end(), v2));
       // graph[v2].erase(std::find(graph[v2].begin(), graph[v2].end(), v1));
+	  // std::cout << "remove edge (" << v1 << ", " << v2 << ")" << std::endl;
       graph.removeEdge(v1, v2);
 
       // update the mcd values
