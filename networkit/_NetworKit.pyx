@@ -9907,6 +9907,8 @@ cdef class PivotMDS (GraphLayoutAlgorithm):
 		"""Constructs a PivotMDS object for the given @a graph. The algorithm should embed the graph in @a dim dimensions using @a numberOfPivots pivots."""
 		(<_PivotMDS*>(self._this)).run()
 		return self
+
+
 cdef extern from "cpp/core_maintenance/glist.h":
 	# declare it
 	cdef struct _SubCore "NetworKit::core::GLIST::CoreComponent":
@@ -9915,7 +9917,7 @@ cdef extern from "cpp/core_maintenance/glist.h":
 	cdef cppclass _GLIST "NetworKit::core::GLIST":
 		void _GLIST(count) except +
 		void ComputeCore(_Graph, bool, vector[count]) except +
-		void Insert(index, index, _Graph, vector[count] core, vector[node] affected_nodes) except +
+		void Insert(index, index, _Graph, vector[count] core, vector[node] affected_nodes, unordered_set[node] propagated_nodes) except +
 		void Remove(index, index, _Graph, vector[count]) except +
 
 		void CoreGuidedBFS(_Graph, vector[count] core, vector[_SubCore] nc_list, vector[index] nc_ids) except +
@@ -9943,6 +9945,7 @@ cdef class Glist:
 	cdef Graph _G
 	cdef vector[count] *_core
 	cdef vector[node] *_affected_nodes
+	cdef unordered_set[node] *_propagated_nodes
 	cdef vector[index] *_sc_id
 	cdef vector[_SubCore] *_sc_list
 
@@ -9954,6 +9957,7 @@ cdef class Glist:
 		self._core = new vector[count](num_nodes, 0)
 		self._sc_id = new vector[index](num_nodes, 0)  # TODO, initialize i
 		self._affected_nodes = new vector[node]()  # empty initially
+		self._propagated_nodes = new unordered_set[node]()  # empty initially
 		self._sc_list = new vector[_SubCore](<int> num_nodes)  # <int> is important, otherwise, no suitable method error
 
 		# init
@@ -9989,15 +9993,19 @@ cdef class Glist:
 		return self._core[0]  # deref
 
 	def insert_edge(self, index u, index v):
+		# print("affected_nodes:", self._affected_nodes[0])
+		# print("propagated_nodes:", self._propagated_nodes[0])
 		self._affected_nodes[0].clear()
-		self._this.Insert(u, v, self._G._this, self._core[0], self._affected_nodes[0])
-		return self._affected_nodes[0]
+		self._propagated_nodes[0].clear()
+
+		self._this.Insert(u, v, self._G._this, self._core[0], self._affected_nodes[0], self._propagated_nodes[0])
+		return self._affected_nodes[0], self._propagated_nodes[0]
 
 	def insert_edges(self, edges):
 		cdef unordered_map[node, int] freq
 		cdef node u, v
 		for (u, v) in edges:
-			aff_nodes = self.insert_edge(u, v)
+			aff_nodes, _ = self.insert_edge(u, v)
 			for n in aff_nodes:
 				if freq.count(n) == 0:
 					freq[n] = 0
@@ -10016,10 +10024,13 @@ cdef class Glist:
 			self.remove_edge(u, v)
 
 
-	def fake_insert(self, index u, index v):
-		affected_nodes = self.insert_edge(u, v)
+	def fake_insert(self, index u, index v, bool return_propagated=False):
+		affected_nodes, propagated_nodes = self.insert_edge(u, v)
 		self.remove_edge(u, v)
-		return affected_nodes
+		if return_propagated:
+			return affected_nodes, propagated_nodes
+		else:
+			return affected_nodes
 
 
 	def fake_insert_edges(self, edges):

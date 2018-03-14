@@ -15,9 +15,10 @@ namespace NetworKit {
 			       const bool init_idx, // initialize the index?
 			       std::vector<node>& core) = 0;
       virtual void Insert(const node v1, const node v2,
-			  Graph& graph,
-			  std::vector<count>& core,
-			  std::vector<node>& affected_nodes) = 0;
+						  Graph& graph,
+						  std::vector<count>& core,
+						  std::vector<node>& affected_nodes,
+						  std::unordered_set<node>& propagated_nodes) = 0;
       virtual void Remove(const node v1, const node v2,
 			  Graph& graph,
 			  std::vector<count>& core) = 0;

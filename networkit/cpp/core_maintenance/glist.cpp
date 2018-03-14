@@ -30,24 +30,24 @@ namespace NetworKit {
 
     void GLIST::ComputeCore(const Graph& graph,
 			    const bool init_idx,
-							std::vector<count>& core) {
+			    std::vector<count>& core) {
       // compute the cores
       auto& deg = core;
       int max_deg = 0;
       for (index i = 0; i < n_; ++i) {
-		// deg[i] = graph[i].size(); // stores the degree
-		deg[i] = graph.degree(i);
-		if (deg[i] > max_deg) {
-		  max_deg = deg[i];  // update max_deg
+	// deg[i] = graph[i].size(); // stores the degree
+	deg[i] = graph.degree(i);
+	if (deg[i] > max_deg) {
+	  max_deg = deg[i];  // update max_deg
 
-		}
+	}
 
       }
 
       // bin[i] = number of nodes with degree i
       std::vector<int> bin(max_deg + 1, 0);
       for (index i = 0; i < n_; ++i) {
-		++bin[deg[i]];
+	++bin[deg[i]];
 
       }
 
@@ -58,9 +58,9 @@ namespace NetworKit {
       // bin[2] = deg[0] + deg[1] + deg[2]
       int start = 0;
       for (int i = 0; i <= max_deg; ++i) {
-		int temp = bin[i];
-		bin[i] = start;
-		start += temp;
+	int temp = bin[i];
+	bin[i] = start;
+	start += temp;
 
       }
 
@@ -70,15 +70,15 @@ namespace NetworKit {
       std::vector<int> vert(n_);
       std::vector<int> pos(n_);
       for (index i = 0; i < n_; ++i) {
-		pos[i] = bin[deg[i]];
-		vert[pos[i]] = i;
-		++bin[deg[i]];   // increment bin[deg[i]] to reflects change of pos
+	pos[i] = bin[deg[i]];
+	vert[pos[i]] = i;
+	++bin[deg[i]];   // increment bin[deg[i]] to reflects change of pos
 
       }
 
       // revert back bin[i] to the states before the previous loop
       for (int i = max_deg; i > 0; --i) {
-		bin[i] = bin[i-1];
+	bin[i] = bin[i-1];
 
       }
       bin[0] = 0;
@@ -88,60 +88,60 @@ namespace NetworKit {
 
       // for each position from 0..n-1
       for (index i = 0; i < n_; ++i) {
-		const index v = vert[i]; // the node at position i
-		if (deg[v] > k) k = deg[v]; // k
-		ASSERT(bin[deg[v]] == i); // why?
-		++bin[deg[v]]; // what does bin track?
-		core[v] = k;
-		vis[v] = true;
-		int rem = 0;
-		for (const int u : graph.neighbors(v)) { // u is v's neighbors
-		  if (vis[u]) continue; // vis[u] true means u < v in order
-		  ++rem; // inc remaining degree
-		  const int pw = bin[deg[u]];
-		  const int pu = pos[u];
-		  if (pw != pu) { // exchange the position of w and u
-			const int w = vert[pw];
-			vert[pu] = w;
-			pos[w] = pu;
-			vert[pw] = u;
-			pos[u] = pw;
-		  }
-		  ++bin[deg[u]];
-		  --deg[u];  // degree(u) decrement
-		  if (pos[u] == i + 1) {
-			bin[deg[u]] = pos[u];
+	const index v = vert[i]; // the node at position i
+	if (deg[v] > k) k = deg[v]; // k
+	ASSERT(bin[deg[v]] == i); // why?
+	++bin[deg[v]]; // what does bin track?
+	core[v] = k;
+	vis[v] = true;
+	int rem = 0;
+	for (const int u : graph.neighbors(v)) { // u is v's neighbors
+	  if (vis[u]) continue; // vis[u] true means u < v in order
+	  ++rem; // inc remaining degree
+	  const int pw = bin[deg[u]];
+	  const int pu = pos[u];
+	  if (pw != pu) { // exchange the position of w and u
+	    const int w = vert[pw];
+	    vert[pu] = w;
+	    pos[w] = pu;
+	    vert[pw] = u;
+	    pos[u] = pw;
+	  }
+	  ++bin[deg[u]];
+	  --deg[u];  // degree(u) decrement
+	  if (pos[u] == i + 1) {
+	    bin[deg[u]] = pos[u];
 
-		  }
-		}
-		if (init_idx) { // build the linked list
-		  node_[v].rem = rem;
-		  if (head_[k] == -1) { // O_k
-			node_[v].prev = node_[v].next = n_; //  to non-existent node n_
-			head_[k] = tail_[k] = v;
-		  } else {
-			node_[v].next = n_;
-			node_[v].prev = tail_[k]; // bidirectional linked list
-			node_[tail_[k]].next = v;
-			tail_[k] = v;
+	  }
+	}
+	if (init_idx) { // build the linked list
+	  node_[v].rem = rem;
+	  if (head_[k] == -1) { // O_k
+	    node_[v].prev = node_[v].next = n_; //  to non-existent node n_
+	    head_[k] = tail_[k] = v;
+	  } else {
+	    node_[v].next = n_;
+	    node_[v].prev = tail_[k]; // bidirectional linked list
+	    node_[tail_[k]].next = v;
+	    tail_[k] = v;
 
-		  }
-		  tree_.Insert(v, false, root_[k]); // ?
-		}
+	  }
+	  tree_.Insert(v, false, root_[k]); // ?
+	}
 
       }
       if (init_idx) {
-		for (index v = 0; v < n_; ++v) {
-		  mcd_[v] = 0;
-		  for (const int u : graph.neighbors(v)) {
-			if (core[u] >= core[v]) {
-			  ++mcd_[v];
+	for (index v = 0; v < n_; ++v) {
+	  mcd_[v] = 0;
+	  for (const int u : graph.neighbors(v)) {
+	    if (core[u] >= core[v]) {
+	      ++mcd_[v];
 
-			}
+	    }
 
-		  }
+	  }
 
-		}
+	}
 
       }
 
@@ -149,44 +149,50 @@ namespace NetworKit {
     void GLIST::Insert(const node v1, const node v2,
 		       Graph& graph,
 		       std::vector<count>& core,
-					   std::vector<node>& affected_nodes) {
+		       std::vector<node>& affected_nodes,
+		       std::unordered_set<node>& propagated_nodes) {
       // insert the edge
       // graph[v1].push_back(v2);
       // graph[v2].push_back(v1);
-	  // std::cerr << "insert edge" << std::endl;
+      // std::cerr << "insert edge" << std::endl;
       graph.addEdge(v1, v2);
 
       // update mcd
-	  // std::cerr << "udpate mcd" << std::endl;
+      // std::cerr << "udpate mcd" << std::endl;
       if (core[v1] <= core[v2]) ++mcd_[v1];
       if (core[v2] <= core[v1]) ++mcd_[v2];
       // the source node and the current core number
       int src = v1;
+
+	  // the node itself is propagated of course
+	  propagated_nodes.insert(src);
+
       const int K = core[v1] <= core[v2] ? core[v1] : core[v2];
       if ((core[v1] == core[v2] &&
 		   tree_.Rank(v1) > tree_.Rank(v2)) ||
 		  core[v1] > core[v2]) {
 		src = v2;
-
       }
-	  // std::cerr << "update core number" << std::endl;
+      // std::cerr << "update core number" << std::endl;
       // update core number
       ++node_[src].rem;
       // there is no need to update the core numbers
       if (node_[src].rem <= K) {
 		return;
-
       }
 
-	  // std::cerr << "heap.insert" << std::endl;
+      // std::cerr << "heap.insert" << std::endl;
       // preparing the heap
       heap_.Insert(GetRank(src), src);
       //
       std::vector<int> swap;
       // the set of vertices, denoted as A, that doesn't need to be updated
-	  // std::cerr << "for loop (1)" << std::endl;
+      // std::cerr << "for loop (1)" << std::endl;
       int list_h = -1, list_t = -1;
       for (int cur = head_[K]; n_ != cur; ) {
+
+		// the "jumping" part
+		// line 14-19
 		if (heap_.Empty() || (node_[cur].ext == 0 && node_[cur].rem <= K)) {
 		  const int start = cur;
 		  const int end = heap_.Empty() ? tail_[K] : node_[heap_.Top().val].prev;
@@ -205,10 +211,8 @@ namespace NetworKit {
 			node_[start].prev = list_t;
 			node_[list_t].next = start;
 			list_t = end;
-
 		  }
 		  continue;
-
 		}
 		// update the heap
 		// invariant: heap.Top().val == cur
@@ -218,7 +222,7 @@ namespace NetworKit {
 		const int next = node_[cur].next;
 		const int cur_deg = node_[cur].ext + node_[cur].rem;
 		if (likely(cur_deg <= K)) {
-		  // insert into A
+		  // inserted into A
 		  node_[node_[cur].prev].next = node_[cur].next;
 		  node_[node_[cur].next].prev = node_[cur].prev;
 		  if (likely(-1 != list_h)) {
@@ -230,7 +234,6 @@ namespace NetworKit {
 		  } else {
 			node_[cur].prev = node_[cur].next = n_;
 			list_h = list_t = cur;
-
 		  }
 		  node_[cur].rem = cur_deg;
 		  node_[cur].ext = 0;
@@ -242,32 +245,29 @@ namespace NetworKit {
 		  evicted_[cur] = true;
 		  for (const auto u : graph.neighbors(cur)) {
 			if (core[u] == core[cur] && GetRank(u) > rank_[cur]) {
-			  ++node_[u].ext;
+			  ++node_[u].ext; // increase neighbors's deg^{*}
+			  // effect propagated to node u
+			  propagated_nodes.insert(u);
 			  if (!heap_.Contains(rank_[u])) {
 				heap_.Insert(rank_[u], u);
-
 			  }
-
 			}
-
 		  }
-
 		}
 		cur = next;
-
       }
       ASSERT(heap_.Empty());
       head_[K] = list_h;
       tail_[K] = list_t;
 
-	  // std::cerr << "for loop (2)" << std::endl;
+      // std::cerr << "for loop (2)" << std::endl;
       for (const int v : swap) {
 		tree_.Delete(v, root_[K]);
 		tree_.InsertAfter(v, node_[v].prev, root_[K]);
 
       }
 
-	  // std::cerr << "evivtion" << std::endl;
+      // std::cerr << "evivtion" << std::endl;
       // cope with those vertices whose core need to be updated
       if (evicted_[src]) {
 		auto tail = -1; // tail
@@ -314,18 +314,19 @@ namespace NetworKit {
 
       }
 
-	  // std::cerr << "garbage" << std::endl;
+      // std::cerr << "garbage" << std::endl;
       for (const int v : garbage_) rank_[v] = 0;
       garbage_.clear();
 
     }
+
     void GLIST::Remove(const node v1, const node v2,
-					   Graph& graph,
-					   std::vector<count>& core) {
+		       Graph& graph,
+		       std::vector<count>& core) {
       // remove the edge
       // graph[v1].erase(std::find(graph[v1].begin(), graph[v1].end(), v2));
       // graph[v2].erase(std::find(graph[v2].begin(), graph[v2].end(), v1));
-	  // std::cout << "remove edge (" << v1 << ", " << v2 << ")" << std::endl;
+      // std::cout << "remove edge (" << v1 << ", " << v2 << ")" << std::endl;
       graph.removeEdge(v1, v2);
 
       // update the mcd values
@@ -341,12 +342,9 @@ namespace NetworKit {
 
 		} else {
 		  --node_[v1].rem;
-
 		}
-
       } else {
 		--node_[root].rem;
-
       }
       // update cores
       std::vector<int> to_be_clear;
@@ -450,61 +448,61 @@ namespace NetworKit {
 
     }
     void GLIST::Check(const Graph& graph,
-					  const std::vector<count>& core) const {
+		      const std::vector<count>& core) const {
       for (index v = 0; v < n_; ++v) {
-		int local_mcd = 0;
-		for (const auto u : graph.neighbors(v)) {
-		  if (core[u] >= core[v]) ++local_mcd;
+	int local_mcd = 0;
+	for (const auto u : graph.neighbors(v)) {
+	  if (core[u] >= core[v]) ++local_mcd;
 
-		}
-		ASSERT(mcd_[v] == local_mcd);
-		ASSERT(!visited_[v]);
-		ASSERT(!evicted_[v]);
-		ASSERT(rank_[v] == 0);
-		ASSERT(deg_[v] == 0);
+	}
+	ASSERT(mcd_[v] == local_mcd);
+	ASSERT(!visited_[v]);
+	ASSERT(!evicted_[v]);
+	ASSERT(rank_[v] == 0);
+	ASSERT(deg_[v] == 0);
 
       }
       std::vector<bool> vis(n_, false);
       for (index v = 0; v < n_; ++v) {
-		if (vis[v]) continue;
-		const int K = core[v];
-		int tail = -1;
-		ASSERT(-1 != head_[K]);
-		for (int tmp = head_[K]; n_ != tmp; tmp = node_[tmp].next) {
-		  ASSERT(!vis[tmp]);
-		  vis[tmp] = true;
-		  tail = tmp;
-		  ASSERT(core[tmp] == K);
-		  ASSERT(node_[tmp].ext == 0);
-		  if (n_ != node_[tmp].next) {
-			ASSERT(node_[node_[tmp].next].prev == tmp);
+	if (vis[v]) continue;
+	const int K = core[v];
+	int tail = -1;
+	ASSERT(-1 != head_[K]);
+	for (int tmp = head_[K]; n_ != tmp; tmp = node_[tmp].next) {
+	  ASSERT(!vis[tmp]);
+	  vis[tmp] = true;
+	  tail = tmp;
+	  ASSERT(core[tmp] == K);
+	  ASSERT(node_[tmp].ext == 0);
+	  if (n_ != node_[tmp].next) {
+	    ASSERT(node_[node_[tmp].next].prev == tmp);
 
-		  }
+	  }
 
-		}
-		ASSERT(tail_[K] == tail);
-		ASSERT(node_[head_[K]].prev == n_);
-		ASSERT(node_[tail_[K]].next == n_);
+	}
+	ASSERT(tail_[K] == tail);
+	ASSERT(node_[head_[K]].prev == n_);
+	ASSERT(node_[tail_[K]].next == n_);
 
-		for (int tmp = head_[K], rid = 0; n_ != tmp; tmp = node_[tmp].next) {
-		  ASSERT(tree_.Rank(tmp) == ++rid);
+	for (int tmp = head_[K], rid = 0; n_ != tmp; tmp = node_[tmp].next) {
+	  ASSERT(tree_.Rank(tmp) == ++rid);
 
-		}
-		for (int tmp = head_[K]; n_ != tmp; tmp = node_[tmp].next) {
-		  int local = 0;
-		  for (const auto u : graph.neighbors(tmp)) {
-			if (core[u] > core[tmp] ||
-				(core[u] == core[tmp] &&
-				 tree_.Rank(u) > tree_.Rank(tmp))) {
-			  ++local;
+	}
+	for (int tmp = head_[K]; n_ != tmp; tmp = node_[tmp].next) {
+	  int local = 0;
+	  for (const auto u : graph.neighbors(tmp)) {
+	    if (core[u] > core[tmp] ||
+		(core[u] == core[tmp] &&
+		 tree_.Rank(u) > tree_.Rank(tmp))) {
+	      ++local;
 
-			}
+	    }
 
-		  }
-		  ASSERT(local == node_[tmp].rem);
-		  ASSERT(node_[tmp].rem <= K);
+	  }
+	  ASSERT(local == node_[tmp].rem);
+	  ASSERT(node_[tmp].rem <= K);
 
-		}
+	}
 
       }
       ASSERT(garbage_.empty());
@@ -514,65 +512,65 @@ namespace NetworKit {
     void GLIST::Keep(const Graph& graph,
 		     const node v, const node K,
 		     const std::vector<count>& core,
-					 int& list_t, std::vector<int>& swap) {
+		     int& list_t, std::vector<int>& swap) {
       // update
       std::queue<int> bfs;
       for (const auto u : graph.neighbors(v)) {
-		if (core[u] == core[v] && evicted_[u]) {
-		  --node_[u].rem;
-		  if (node_[u].rem + node_[u].ext <= K) {
-			visited_[u] = true;
-			bfs.push(u);
+	if (core[u] == core[v] && evicted_[u]) {
+	  --node_[u].rem;
+	  if (node_[u].rem + node_[u].ext <= K) {
+	    visited_[u] = true;
+	    bfs.push(u);
 
-		  }
+	  }
 
-		}
+	}
 
       }
       while (!bfs.empty()) {
-		const int u = bfs.front(); bfs.pop();
-		visited_[u] = false;
-		evicted_[u] = false;
-		// insert u into the list
-		node_[node_[u].prev].next = node_[u].next;
-		node_[node_[u].next].prev = node_[u].prev;
-		swap.push_back(u);
-		node_[list_t].next = u;
-		node_[u].next = n_;
-		node_[u].prev = list_t;
-		node_[u].rem += node_[u].ext;
-		node_[u].ext = 0;
-		// advance the tail of list
-		list_t = u;
-		// find more vertices to keep
-		for (const auto w : graph.neighbors(u)) {
-		  if (core[w] != core[u]) continue;
-		  if (rank_[w] > rank_[v]) {
-			--node_[w].ext;
-			if (0 == node_[w].ext) {
-			  heap_.Delete(rank_[w]);
+	const int u = bfs.front(); bfs.pop();
+	visited_[u] = false;
+	evicted_[u] = false;
+	// insert u into the list
+	node_[node_[u].prev].next = node_[u].next;
+	node_[node_[u].next].prev = node_[u].prev;
+	swap.push_back(u);
+	node_[list_t].next = u;
+	node_[u].next = n_;
+	node_[u].prev = list_t;
+	node_[u].rem += node_[u].ext;
+	node_[u].ext = 0;
+	// advance the tail of list
+	list_t = u;
+	// find more vertices to keep
+	for (const auto w : graph.neighbors(u)) {
+	  if (core[w] != core[u]) continue;
+	  if (rank_[w] > rank_[v]) {
+	    --node_[w].ext;
+	    if (0 == node_[w].ext) {
+	      heap_.Delete(rank_[w]);
 
-			}
+	    }
 
-		  } else if (rank_[w] > rank_[u] && evicted_[w]) {
-			--node_[w].ext;
-			if (!visited_[w] && node_[w].ext + node_[w].rem <= K) {
-			  visited_[w] = true;
-			  bfs.push(w);
+	  } else if (rank_[w] > rank_[u] && evicted_[w]) {
+	    --node_[w].ext;
+	    if (!visited_[w] && node_[w].ext + node_[w].rem <= K) {
+	      visited_[w] = true;
+	      bfs.push(w);
 
-			}
+	    }
 
-		  } else if (evicted_[w]) {
-			--node_[w].rem;
-			if (!visited_[w] && node_[w].ext + node_[w].rem <= K) {
-			  visited_[w] = true;
-			  bfs.push(w);
+	  } else if (evicted_[w]) {
+	    --node_[w].rem;
+	    if (!visited_[w] && node_[w].ext + node_[w].rem <= K) {
+	      visited_[w] = true;
+	      bfs.push(w);
 
-			}
+	    }
 
-		  }
+	  }
 
-		}
+	}
 
       }
 
@@ -581,23 +579,23 @@ namespace NetworKit {
 				   const node K, const node v,
 				   std::vector<count>& core,
 				   std::vector<int>& to_be_clear,
-								   std::vector<int>& changed) {
+				   std::vector<int>& changed) {
       evicted_[v] = true;
       --core[v];
       changed.push_back(v);
       for (const auto u : graph.neighbors(v)) {
-		if (K == core[u]) {
-		  if (!visited_[u]) {
-			deg_[u] = mcd_[u];
-			visited_[u] = true;
-			to_be_clear.push_back(u);
-		  }
-		  --deg_[u];
-		  if (deg_[u] < K && !evicted_[u]) {
-			PropagateDismissal(graph, K, u, core, to_be_clear, changed);
-		  }
+	if (K == core[u]) {
+	  if (!visited_[u]) {
+	    deg_[u] = mcd_[u];
+	    visited_[u] = true;
+	    to_be_clear.push_back(u);
+	  }
+	  --deg_[u];
+	  if (deg_[u] < K && !evicted_[u]) {
+	    PropagateDismissal(graph, K, u, core, to_be_clear, changed);
+	  }
 
-		}
+	}
 
       }
 

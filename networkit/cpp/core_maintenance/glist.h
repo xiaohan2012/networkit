@@ -25,7 +25,8 @@ namespace NetworKit{
       void Insert(const index v1, const index v2,
 		  Graph& graph,
 		  std::vector<count>& core,
-		  std::vector<node>& affected_nodes);
+		  std::vector<node>& affected_nodes,
+		  std::unordered_set<node>& propagated_nodes);
       void Remove(const index v1, const index v2,
 		  Graph& graph,
 		  std::vector<count>& core);
@@ -46,11 +47,11 @@ namespace NetworKit{
 			 std::vector<CoreComponent>& nc_list,
 			 std::vector<index>& nc_ids);
 
-      void FakeInsert(const node v1, const node v2,
-		     Graph& graph,
-		     std::vector<count>& core,
-		     const std::vector<node>& nc_ids,
-		     std::vector<node>& affected_nodes);
+      /* void FakeInsert(const node v1, const node v2, */
+      /* 		     Graph& graph, */
+      /* 		     std::vector<count>& core, */
+      /* 		     const std::vector<node>& nc_ids, */
+      /* 		     std::vector<node>& affected_nodes); */
 
       void Checkpoint();
       void Rollback();
@@ -61,10 +62,10 @@ namespace NetworKit{
 	don't use unless it's not test
       */
       struct ListNode {
-	count rem;
-	count ext;
-	index prev;
-	index next;
+		count rem;  // remaining degree
+		count ext; // degree from V_c (candidates to promote)
+		index prev; // previous node
+		index next;  // next node
       };
 
       std::vector<ListNode> get_nodes(){

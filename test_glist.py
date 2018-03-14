@@ -5,6 +5,22 @@ from networkit import Glist, Graph
 
 @pytest.fixture
 def g():
+    """
+       0
+      / \
+     /   \
+    /     \
+    1 --- 2
+    |    /|
+    |   / |
+    | /   |
+    |/    |
+    3 --- 4 --- 5
+
+    node       : 0  1  2  3  4  5
+    core number: 2  2  2  2  2  1
+    """
+
     g = Graph()
     for i in range(6):
         g.addNode()
@@ -27,12 +43,22 @@ def test_compute_core(g, glist):
 
 
 def test_insert_edge(g, glist):
-    nodes = glist.insert_edge(0, 4)
+    nodes, _ = glist.insert_edge(0, 4)
     assert glist.core == [3]*5 + [1]
     assert set(nodes) == {0, 1, 2, 3, 4}
-    nodes = glist.insert_edge(2, 5)
+    nodes, _ = glist.insert_edge(2, 5)
     assert glist.core == [3]*5 + [2]
     assert nodes == [5]
+
+
+def test_propagated_nodes(g, glist):
+    _, p_nodes = glist.insert_edge(0, 4)
+    assert glist.core == [3]*5 + [1]
+    assert set(p_nodes) == {0, 1, 2, 3, 4}
+    _, p_nodes = glist.fake_insert(0, 3, True)
+    assert set(p_nodes) == {0, 1, 2, 3, 4}
+    _, p_nodes = glist.fake_insert(1, 4, True)  # need to print out the k-order
+    assert set(p_nodes) == {1}
 
 
 def test_remove_edge(g, glist):
